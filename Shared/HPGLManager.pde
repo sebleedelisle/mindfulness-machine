@@ -10,6 +10,7 @@ final int COMMAND_FINISH = 4;
 final int COMMAND_VELOCITY = 5; 
 final int COMMAND_FORCE = 6; 
 final int COMMAND_PEN_CHANGE = 7; 
+final int COMMAND_CIRCLE = 8;
 
 class HPGLManager { 
 
@@ -52,15 +53,14 @@ class HPGLManager {
 
     commands = new ArrayList();
 
-    penColours[0] = color(255,0,0); 
-    penColours[1] = color(255,128,0); 
-    penColours[2] = color(255,255,0); 
-    penColours[3] = color(0,255,0); 
-    penColours[4] = color(0,255,255); 
-    penColours[5] = color(0,0,255); 
-    penColours[6] = color(100,0,255); 
-    penColours[7] = color(255,64,128); 
-    
+    penColours[0] = color(255, 0, 0); 
+    penColours[1] = color(255, 128, 0); 
+    penColours[2] = color(255, 255, 0); 
+    penColours[3] = color(0, 255, 0); 
+    penColours[4] = color(0, 255, 255); 
+    penColours[5] = color(0, 0, 255); 
+    penColours[6] = color(100, 0, 255); 
+    penColours[7] = color(255, 64, 128);
   }
 
 
@@ -161,28 +161,36 @@ class HPGLManager {
 
         screenVertex(c);
         drawing = true;
+      } else if (c.c == COMMAND_CIRCLE) { 
+        if (drawing) {
+          endShape(); 
+          drawing = false;
+        }
+        PVector p = plotterToScreen(new PVector(c.p1, c.p2));
+        ellipseMode(RADIUS); 
+        float r = (float)c.p3/scaleToPlotter; 
+        ellipse(p.x, p.y, r, r); 
+        drawing = false;
       } else if (c.c == COMMAND_PEN_CHANGE) { 
         if (drawing) {
           endShape(); 
-          drawing = false; 
-       }
-       stroke(penColours[c.p1-1]); 
-       
-     }
-     
-   }
-
-   if (drawing) {
-    endShape(); 
-        // println("endShape");
+          drawing = false;
+        }
+        stroke(penColours[c.p1-1]);
       }
     }
 
-    void screenVertex(Command c) { 
+    if (drawing) {
+      endShape(); 
+      // println("endShape");
+    }
+  }
 
-      PVector p = new PVector(c.p1, c.p2); 
-      p = plotterToScreen(p); 
-      vertex(p.x, p.y); 
+  void screenVertex(Command c) { 
+
+    PVector p = new PVector(c.p1, c.p2); 
+    p = plotterToScreen(p); 
+    vertex(p.x, p.y); 
     //ellipse(p.x, p.y, 5, 5); 
     // println("vertex "+p.x + " " +p.y);
   }
@@ -215,6 +223,17 @@ class HPGLManager {
         hpgl.forceSelect(c.p1);
       } else if (c.c == COMMAND_PEN_CHANGE) {
         hpgl.selectPen(c.p1);
+      } else if (c.c == COMMAND_CIRCLE) {
+
+        penUp();
+        float circleres = clamp(2*asin((float)30/(2*c.p3)), 0, 60);
+
+        String cmd = "PU"+c.p1+","+c.p2+";CI"+c.p3+","+round(circleres)+";";
+        hpgl.rawCommand(cmd, false); 
+        println(cmd, degrees(circleres)); 
+        //hpgl.rawCommand("C"+c.p1+","+c.p2+","+c.p3+",0,360;", false); 
+        penIsDown = true; 
+        penUp();
       }
     }
     currentCommand = i; 
@@ -263,11 +282,25 @@ class HPGLManager {
     plotLine(new PVector(x, y+h), new PVector(x, y));
   }
 
+  void plotCircle(Circle c) { 
+
+    plotCircle(c.x, c.y, c.r);
+  }
+  void plotCircle(float x, float y, float r) { 
+    PVector p = screenToPlotter(new PVector(x, y)); 
+    int cr = round(r * scaleToPlotter); 
+    commands.add(new Command(COMMAND_CIRCLE, round(p.x), round(p.y), cr)) ;
+    //hpgl.penUp();
+    //hpgl.plotAbsolute(cx, cy); 
+    //hpgl.penDown(); 
+    //hpgl.rawCommand("CI"+cr, false); 
+    //hpgl.penUp();
+  }
+  
   void setVelocity(float v) { 
     if (!initialised) initHPGL();
     hpgl.rawCommand("VS"+v, false);
   }
-
 
   void penUp() {
     if (!penIsDown) return; 
@@ -293,22 +326,11 @@ class HPGLManager {
   }
 
 
-  /*
-  void plotterDrawCircle(Circle circle) { 
-   
-   int cx = round(circle.x * scaleToPlotter); 
-   int cy = round(circle.y * scaleToPlotter); 
-   int cr = round(circle.radius * scaleToPlotter); 
-   
-   hpgl.penUp();
-   hpgl.plotAbsolute(cx, cy); 
-   hpgl.penDown(); 
-   hpgl.rawCommand("CI"+cr, false); 
-   hpgl.penUp();
-   }
-   */
 
-   void moveTo(PVector p) { 
+
+
+
+  void moveTo(PVector p) { 
 
     p = screenToPlotter(p); 
     if (currentPosition.dist(p)>accuracy) { 
@@ -390,21 +412,29 @@ class HPGLManager {
 class Command { 
 
   int c; 
-  int p1, p2;
+  int p1, p2, p3;
 
   Command (int _c, int _p1, int _p2) { 
-
-    set(_c, _p1, _p2);
+    set(_c, _p1, _p2, 0);
+  }
+  Command (int _c, int _p1, int _p2, int _p3) { 
+    set(_c, _p1, _p2, _p3);
   }
 
+  Command (int _c, float _p1, float _p2, float _p3) { 
+    set(_c, round(_p1), round(_p2), round(_p3)) ;
+  }
   Command (int _c, float _p1, float _p2) { 
     set(_c, round(_p1), round(_p2)) ;
   }
-
   void set(int _c, int _p1, int _p2) { 
+    set(_c, _p1, _p2, 0); 
+    //println("CMD : "+c+" "+p1+" "+p2);
+  }
+  void set(int _c, int _p1, int _p2, int _p3) { 
     c = _c; 
     p1 = _p1; 
     p2 = _p2; 
-    //println("CMD : "+c+" "+p1+" "+p2);
+    p3 = _p3;
   }
 };
