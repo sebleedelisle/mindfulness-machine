@@ -2,6 +2,17 @@
 import fup.hpgl.*;
 import processing.serial.*;
 
+final int COMMAND_MOVE = 0; 
+final int COMMAND_DRAW = 1; 
+final int COMMAND_DRAW_DIRECT = 2; 
+final int COMMAND_RESTART = 3; 
+final int COMMAND_FINISH = 4; 
+final int COMMAND_VELOCITY = 5; 
+final int COMMAND_FORCE = 6; 
+final int COMMAND_PEN_CHANGE = 7; 
+
+
+
 class HPGLManager { 
 
   HPGL hpgl;
@@ -27,7 +38,7 @@ class HPGLManager {
   ArrayList commands; 
 
   int currentPen = 1; 
-  
+
   int currentCommand = 0; 
 
   boolean printing = false; 
@@ -48,12 +59,12 @@ class HPGLManager {
   boolean initHPGL() { 
 
     String[] interfaces = Serial.list(); 
-    Messages.log(interfaces); 
+    println(join(interfaces, "\n")); 
     int serialNumber = -1; 
 
     for (int i =0; i<interfaces.length; i++) { 
 
-      if (interfaces[i].indexOf("tty.usbserial")>-1) {
+      if (interfaces[i].indexOf("tty.Repleo-PL2303")>-1) {
         serialNumber = i;
       }
     }
@@ -82,8 +93,7 @@ class HPGLManager {
       initialised = true; 
 
       return true;
-    } 
-    else { 
+    } else { 
       println("NO USB SERIAL DEVICE DETECTED");
       exit();
       return false;
@@ -92,10 +102,10 @@ class HPGLManager {
 
   boolean update() {
     renderCommands();
-    
-     stroke(255); 
-     noFill();
-      rect(0, 0, screenWidth-1, screenHeight-1); 
+
+    stroke(255); 
+    noFill();
+    rect(0, 0, screenWidth-1, screenHeight-1); 
 
     if (!initialised) return false; 
 
@@ -107,8 +117,7 @@ class HPGLManager {
       if ((commands.size()%100) ==0) 
         println("COMMANDS TO PROCESS : " + commands.size()); 
       return true;
-    } 
-    else { 
+    } else { 
       return false ;
     }
   }
@@ -119,53 +128,39 @@ class HPGLManager {
 
     boolean drawing = false; 
     for (int i = 0; i<commands.size(); i++) { 
-      
-      
+
+
       Command c = (Command)commands.get(i); 
-      
-      if(i==currentCommand) { 
-         circleAtPoint(c);  
-        
+
+      if (i==currentCommand) { 
+        circleAtPoint(c);
       }
       //println(c.c); 
       if (c.c == COMMAND_MOVE) { 
         if (drawing) {
-          endShape(); 
-          //println("endShape");
+          endShape();
         }
-        //println("beginShape"); 
+
         beginShape(); 
 
-       // print("move "); 
         screenVertex(c); 
-        //vertex(screenToPlotter(new PVector(c.p1, c.p2))); 
-        //vertex(c.p1 + offsetX, c.p2 + offsetY);
-        // println("moveTo "  + (c.p1 + offsetX) +" "+(c.p2 + offsetY));
-        drawing = true;
-      } 
-      else if (c.c == COMMAND_DRAW) { 
-        //println("lineTo " + (c.p1 + offsetX) +" "+(c.p2 + offsetY));
-        //vertex(screenToPlotter(new PVector(c.p1, c.p2))); 
-        //print("draw "); 
-        screenVertex(c);
-        drawing = true; 
 
-        //   vertex(c.p1 + offsetX, c.p2 + offsetY);
-      } 
-      //      else if (c.c == COMMAND_VELOCITY) {
-      //        setVelocity(c.p1);
-      //      } 
-      //      else if (c.c == COMMAND_FORCE) {
-      //        hpgl.forceSelect(c.p1);
-      //      } 
-      //      else if (c.c == COMMAND_PEN_CHANGE) {
-      //        hpgl.selectPen(c.p1);
-      //      }
+        drawing = true;
+      } else if (c.c == COMMAND_DRAW) { 
+
+        screenVertex(c);
+        drawing = true;
+      } else if (c.c == COMMAND_PEN_CHANGE) { 
+        if (c.p1==0) stroke(128); 
+        else stroke(255, 140, 0);
+      }
+     
     }
-    if (drawing) {
-      endShape(); 
-     // println("endShape");
-    }
+    
+     if (drawing) {
+        endShape(); 
+        // println("endShape");
+      }
   }
 
   void screenVertex(Command c) { 
@@ -174,21 +169,21 @@ class HPGLManager {
     p = plotterToScreen(p); 
     vertex(p.x, p.y); 
     //ellipse(p.x, p.y, 5, 5); 
-   // println("vertex "+p.x + " " +p.y);
+    // println("vertex "+p.x + " " +p.y);
   }
-  
+
   void circleAtPoint(Command c) { 
 
     PVector p = new PVector(c.p1, c.p2); 
     p = plotterToScreen(p); 
     //vertex(p.x, p.y); 
     ellipse(p.x, p.y, 5, 5); 
-   // println("vertex "+p.x + " " +p.y);
+    // println("vertex "+p.x + " " +p.y);
   }
   void processCommand(int numCommands) { 
-    
+
     int lastcommand = currentCommand+numCommands; 
-    if(lastcommand>commands.size()) lastcommand = commands.size()-1; 
+    if (lastcommand>commands.size()) lastcommand = commands.size()-1; 
     int i; 
     for ( i = currentCommand; i<lastcommand; i++) { 
       Command c = (Command)commands.get(i); 
@@ -196,23 +191,19 @@ class HPGLManager {
       if (c.c == COMMAND_MOVE) { 
         penUp(); 
         hpgl.plotAbsolute(c.p1 + offsetX, c.p2 + offsetY);
-      } 
-      else if (c.c == COMMAND_DRAW) { 
+      } else if (c.c == COMMAND_DRAW) { 
         penDown(); 
         hpgl.plotAbsolute(c.p1 + offsetX, c.p2 + offsetY);
-      } 
-      else if (c.c == COMMAND_VELOCITY) {
+      } else if (c.c == COMMAND_VELOCITY) {
         setVelocity(c.p1);
-      } 
-      else if (c.c == COMMAND_FORCE) {
+      } else if (c.c == COMMAND_FORCE) {
         hpgl.forceSelect(c.p1);
-      } 
-      else if (c.c == COMMAND_PEN_CHANGE) {
+      } else if (c.c == COMMAND_PEN_CHANGE) {
         hpgl.selectPen(c.p1);
       }
     }
     currentCommand = i; 
-    if(currentCommand>=commands.size()) printing = false; 
+    if (currentCommand>=commands.size()) printing = false;
   }
 
   void setOffset(float xMils, float yMils) { 
@@ -227,8 +218,7 @@ class HPGLManager {
     // if the screen aspect is wider than the plotter
     if (plotAspectRatio>screenAspectRatio) { 
       scaleToPlotter = plotWidth/(float)width;
-    } 
-    else { 
+    } else { 
       scaleToPlotter = plotHeight/(float)height;
     } 
 
@@ -410,7 +400,7 @@ class HPGLManager {
     screenPos.mult(1/scaleToPlotter); 
     screenPos.x+=offsetX; 
     screenPos.y+=offsetY; 
-    
+
 
     //roundVector(plotterPos);
 
@@ -418,10 +408,174 @@ class HPGLManager {
 
     return screenPos;
   }
-  
+
   void startPrinting() { 
-     printing=true;  
-    
-    
+    printing=true;
+  }
+}
+
+
+class Command { 
+
+  int c; 
+  int p1, p2;
+
+  Command (int _c, int _p1, int _p2) { 
+
+    set(_c, _p1, _p2);
+  }
+
+  Command (int _c, float _p1, float _p2) { 
+    set(_c, round(_p1), round(_p2)) ;
+  }
+
+  void set(int _c, int _p1, int _p2) { 
+    c = _c; 
+    p1 = _p1; 
+    p2 = _p2; 
+    //println("CMD : "+c+" "+p1+" "+p2);
+  }
+};
+
+
+
+PVector getPointAtRectIntersection(Rectangle r, PVector p1, PVector p2) { 
+
+    if (r.containsPoint(p1) && r.containsPoint(p2)) { 
+        println("WARNING - both points are inside rectangle - no intersection");
+    } else if (!r.containsPoint(p1) && !r.containsPoint(p2)) { 
+        println("WARNING - neither point is within rectangle - no intersection");
+    } 
+
+    // need to make sure p1 is the one that is outside the rectangle. 
+    if (r.containsPoint(p1)) { 
+        PVector t = p1; 
+        p1 = p2; 
+        p2 = t;
+    }
+    PVector v = p2.copy(); 
+    v.sub(p1); 
+
+    PVector intersect = p1.copy(); 
+    intersect.x = clamp(p1.x, r.x, r.getRight());
+    intersect.y = clamp(p1.y, r.y, r.getBottom());  
+
+    //ellipse(intersect.x, intersect.y, 2,2);
+    float intersectionPoint = 1; 
+    if ((intersect.x == r.x) || (intersect.x == r.getRight())) {
+        // left or right side intersected
+        float newIntersectionPoint = map(intersect.x, p1.x, p2.x, 0, 1);
+        if (newIntersectionPoint<intersectionPoint) intersectionPoint = newIntersectionPoint;
+    } 
+    if ((intersect.y == r.y) || (intersect.y == r.getBottom())) {
+        // top or bottom side intersected
+        float newIntersectionPoint = map(intersect.y, p1.y, p2.y, 0, 1);
+        if (newIntersectionPoint<intersectionPoint) intersectionPoint = newIntersectionPoint;
+    } 
+    v.mult(intersectionPoint);
+    v.add(p1); 
+    return v;
+}
+
+
+PVector getPositionAtX(PVector p1, PVector p2, float x) { 
+    PVector v = p2.copy(); 
+    v.sub(p1); 
+    v.mult(map(x, p1.x, p2.x, 0, 1)); 
+    v.add(p1); 
+    return v;
+}
+
+
+void drawStarRandom(float x, float y, float size) { 
+    //hpgl.penUp();
+    float startAngle = random(360); 
+    PVector startPoint = new PVector(0, 0); 
+    for (float a = 0; a<=720; a+=720/5) {
+
+        float thisSize = random(size*0.8, size);
+        PVector p = new PVector(round(x + (thisSize*cos(radians(a+startAngle)))), round(y+ (thisSize*sin(radians(a+startAngle))))); 
+        if (a == 0) { 
+            startPoint = p;
+            hpglManager.moveTo(p); 
+            //hpglManager.lineTo(p);
+        } else { 
+            hpglManager.lineTo(p);
+        }
+    }
+    hpglManager.lineTo(startPoint);
+}
+
+void drawStarSimple(float x, float y, float size) { 
+    //hpgl.penUp();
+    float startAngle = random(360); 
+
+    for (float a = 0; a<=120; a+=60) {
+
+        float thisSize = random(size*0.6, size*0.8);
+        PVector p = new PVector(round(x + (thisSize*cos(radians(a+startAngle)))), round(y+ (thisSize*sin(radians(a+startAngle))))); 
+        hpglManager.moveTo(p); 
+        //hpglManager.lineTo(p); 
+        p = new PVector(round(x + (thisSize*cos(radians(a+startAngle+180)))), round(y+ (thisSize*sin(radians(a+startAngle+180))))); 
+        hpglManager.lineTo(p);
+    }
+}
+
+
+void warmUpPen() { 
+    warmUpPen(15);
+}
+void warmUpPen(int numLines) { 
+
+
+    hpglManager.addVelocityCommand(5);
+    float size = height/5; 
+    PVector p = new PVector(); 
+    PVector lastPoint = new PVector(); 
+    hpglManager.moveTo(0, 0); 
+
+    for (int i = 0; i<numLines; i++) { 
+
+        // if(i==0)   hpglManager.moveTo(p); 
+
+        while ( (p.dist (lastPoint)< (size/5)) || (size-p.x<p.y)) {    
+            p.set(random(size), random(size));
+        }
+
+        hpglManager.lineTo(p); 
+        lastPoint.set(p);
+    }
+}
+
+
+class Rectangle { 
+
+  float x, y, w, h; 
+  Rectangle(float x, float y, float w, float h) { 
+    set(x, y, w, h);
+  }
+
+  void set(float x, float y, float w, float h) {
+
+    this.x = x; 
+    this.y = y; 
+    this.w = w; 
+    this.h = h;
+  }
+
+  float getRight() { 
+    return x+w;
+  }
+  float getBottom() { 
+    return y+h;
+  }
+
+  void render() { 
+
+    rect(x, y, w, h);
+  }
+
+  boolean containsPoint(PVector p) { 
+    return((p.x<getRight()) && (p.x>x) && (p.y<getBottom()) && (p.y>y));
   }
 }
