@@ -1,12 +1,9 @@
 import org.opencv.imgproc.Imgproc;
-//import org.opencv.core.*; 
+import org.opencv.core.*; 
 import gab.opencv.Contour; 
-import org.opencv.core.RotatedRect;
 import java.util.Collections;
 import java.util.Comparator;
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-
 
 
 double getOptimumColouringAngle(Contour c) { 
@@ -19,7 +16,7 @@ RotatedRect getMinAreaRect(Contour c) {
   MatOfPoint src = c.pointMat;
 
   MatOfPoint2f dst = new MatOfPoint2f();
-  src.convertTo(dst, org.opencv.core.CvType.CV_32F);
+  src.convertTo(dst, CvType.CV_32F);
 
 
   return Imgproc.minAreaRect(dst);
@@ -51,7 +48,7 @@ public ArrayList<Contour> findContours(boolean findHoles) {
 
     Imgproc.findContours(opencv.matGray, contourMat, hierarchy, contourFindingMode, Imgproc.CHAIN_APPROX_SIMPLE);
   } 
-  catch(org.opencv.core.CvException e) {
+  catch(CvException e) {
     PApplet.println("ERROR: findContours only works with a gray image.");
   }
   for (MatOfPoint c : contourMat) {
@@ -66,22 +63,22 @@ public ArrayList<Contour> findContours(boolean findHoles) {
   return result;
 }
 
-//public class IntersectionComparator implements Comparator<PVector> {
+public class IntersectionComparator implements Comparator<PVector> {
 
-//  public PVector startpoint; 
-//  public IntersectionComparator(PVector start) {
-//    startpoint = start.copy();
-//  }
-//  public int compare(PVector c1, PVector c2) {
-//    float dist1 = startpoint.dist(c1); 
-//    float dist2 = startpoint.dist(c2); 
+  public PVector startpoint; 
+  public IntersectionComparator(PVector start) {
+    startpoint = start.copy();
+  }
+  public int compare(PVector c1, PVector c2) {
+    float dist1 = startpoint.dist(c1); 
+    float dist2 = startpoint.dist(c2); 
 
-//    if (dist1==dist2) {
-//      return 0;
-//    } else if (dist1<dist2) {
-//      return -1;
-//    } else {
-//      return 1;
-//    }
-//  }
-//}
+    if (dist1==dist2) {
+      return 0;
+    } else if (dist1<dist2) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }
+}

@@ -282,7 +282,7 @@ class HPGLManager {
     plotLine(new PVector(x, y+h), new PVector(x, y));
   }
 
-  void plotCircle(HPGLCircle c) { 
+  void plotCircle(Circle c) { 
 
     plotCircle(c.x, c.y, c.r);
   }
@@ -408,70 +408,6 @@ class HPGLManager {
   }
 }
 
-
-
-class HPGLCircle {
-
-  float x, y, r;
-  int pen;
-  boolean filled; 
-  public HPGLCircle(float cx, float cy, float cr) {
-    x = cx; 
-    y = cy; 
-    r = cr;
-    pen = 0;
-  } 
-
-  public void draw() { 
-
-    int col = (pen==0)?255:180; 
-
-    stroke(col); 
-
-    if (filled)  
-      fill(col);
-    else 
-    noFill(); 
-
-    ellipseMode(RADIUS);
-    ellipse(x, y, r, r);
-  }
-  public boolean contains(float px, float py) { 
-    return (distSq(px, py) < (r*r));
-  }
-  public float distSq(float px, float py) { 
-    float dx = x-px; 
-    float dy = y-py; 
-    return (dx*dx)+(dy*dy);
-  }
-  public float dist(float px, float py) { 
-
-    return sqrt(distSq(px, py))-r;
-  }
-}
-public class CircleComparator implements Comparator<HPGLCircle> {
-
-
-  //public IntersectionComparator() {
-  //}
-  public int compare(HPGLCircle c1, HPGLCircle c2) {
-    float stripwidth = 20; 
-    if (floor(c1.x/stripwidth)==(floor(c2.x/stripwidth))) {
-      int strip = floor(c1.x/stripwidth); 
-      if (strip%2==0) return c1.y==c2.y ? 0 : (c1.y<c2.y) ? -1 : 1;  
-      else return c1.y==c2.y ? 0 : (c1.y<c2.y) ? 1 : -1;
-    } else { 
-      return c1.x==c2.x ? 0 : (c1.x<c2.x) ? -1 : 1;
-    }
-    //if (c1.distSq(c2.x, c2.y)==0) {
-    //  return 0;
-    //} else if (c1.x<c2.x) {
-    //  return -1;
-    //} else {
-    //  return 1;
-    //}
-  }
-}
 
 class Command { 
 
