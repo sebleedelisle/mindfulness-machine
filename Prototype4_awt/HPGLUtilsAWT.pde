@@ -5,16 +5,15 @@ import java.awt.Shape;
 //import java.awt.geom.Point2D.Float;
 import java.awt.geom.Line2D; 
 import java.awt.Rectangle;
-
+import java.util.Collections;
 
 import de.erichseifert.gral.util.GeometryUtils; 
 
 void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) { 
 
   ArrayList<Line> lines = new ArrayList<Line>(); 
-  //stroke(255, 0, 255); 
 
-  //RG.shape(shape);
+  shape = GeometryUtils.grow(shape, -penThickness/2);
 
   Rectangle r = shape.getBounds();
 
@@ -61,6 +60,7 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
 
     // and get the intersection points
     List <Point2D> ips = GeometryUtils.intersection(shape, line2d); 
+    Collections.sort(ips, new IntersectionComparator(start));
 
     if ((ips!=null) && (ips.size()>1)) { 
 
@@ -76,21 +76,22 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
       ArrayList<Line> newlines = new ArrayList<Line>(); 
       Line l = new Line();
 
-      //for (i = 0; i<ips.size(); i++) {
-      //  Vec2D ip = ips.get(i); 
-      //  ellipseMode(RADIUS);
-      //  stroke(0, 50);
-      //  gfx.circle(ip, 1);   
-      //}
+      for (i = 0; i<ips.size(); i++) {
+        Point2D ip = ips.get(i); 
+        ellipseMode(RADIUS);
+        stroke(255, 50);
+        ellipse((float)ip.getX(), (float)ip.getY(), 1, 1);
+      }
 
       // algorithm for making sure that line segments are inside 
 
       for ( i = 1; i<ips.size(); i++) {
         Point2D ip1 = ips.get(i-1); 
         Point2D ip2 = ips.get(i); 
-        Point2D mid = subPoints((Point2D.Float)ip2,(Point2D.Float)ip1);
-        mid = scalePoint((Point2D.Float)mid,0.5);
-        mid = addPoints((Point2D.Float)mid, (Point2D.Float)ip1);
+        Point2D mid = subPoints(ip2, ip1);
+        mid = scalePoint(mid, 0.5);
+        mid = addPoints(mid, ip1);
+        ellipse((float)mid.getX(), (float)mid.getY(), 1, 1);
         if (shape.contains(mid)) {
           if ((newlines.size()>0) && (l.p2.equals(new PVector((float)ip1.getX(), (float)ip1.getY())))) {
             l.p2 = new PVector((float)ip2.getX(), (float)ip2.getY());
@@ -143,7 +144,7 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
   boolean reversed = false;
   int currentIndex = 0;
 
-  float shortestDistance = Float.MAX_VALUE;
+  float shortestDistance = java.lang.Float.MAX_VALUE;
 
   int nextDotIndex = -1;
 
@@ -157,7 +158,7 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
 
     line1.reversed = reversed;
     sortedLines.add(line1);
-    shortestDistance = Float.MAX_VALUE;
+    shortestDistance = java.lang.Float.MAX_VALUE;
     nextDotIndex = -1;
 
 
@@ -234,63 +235,109 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
   }
 }
 
-List <Vec2D> getIntersectionPoints(Shape2D p, Line2D l) {
-  List <Vec2D> intersections = new ArrayList <Vec2D> ();
-  for (Line2D aL : p.getEdges()) {
+//List <Vec2D> getIntersectionPoints(Shape2D p, Line2D l) {
+//  List <Vec2D> intersections = new ArrayList <Vec2D> ();
+//  for (Line2D aL : p.getEdges()) {
 
-    Line2D.LineIntersection isec = aL.intersectLine(l);
-    if (isec.getType()==Line2D.LineIntersection.Type.INTERSECTING) {
-      intersections.add( isec.getPos() );
-    }
-  }
+//    Line2D.LineIntersection isec = aL.intersectLine(l);
+//    if (isec.getType()==Line2D.LineIntersection.Type.INTERSECTING) {
+//      intersections.add( isec.getPos() );
+//    }
+//  }
 
-  // sort the intersection points      
-  Collections.sort(intersections, new IntersectionComparator(l.a));
+//  // sort the intersection points      
+//  Collections.sort(intersections, new IntersectionComparator(l.a));
 
-  return intersections;
-}
+//  return intersections;
+//}
 
 void outlineContour(Shape shape, int penNum, boolean dryrun) { 
 
   if (dryrun) return; 
   hpglManager.addPenCommand(penNum); 
+  //PathIterator pi = path.getPathIterator(null);
+  PathIterator pi = new FlatteningPathIterator(shape.getPathIterator(null), 0.2);
+  PVector lastMove = new PVector(); 
 
-  if (shape instanceof CompoundPolygon2D) { 
-    for (Polygon2D poly : ((CompoundPolygon2D)shape).polygons) { 
-      outlineContour(poly, penNum, dryrun);
-    }
-  } else {
-    Polygon2D poly; 
-    if (!(shape instanceof Polygon2D)) { 
-      poly = shape.toPolygon2D();
-    } else {
-      poly = (Polygon2D)shape;
-    }
+  boolean verbose = false; 
 
-    boolean move = true; 
+  while (pi.isDone() == false) {
+    float[] coordinates = new float[6];
+    int type = pi.currentSegment(coordinates);
 
-    for (int j = 0; j<=poly.getNumVertices(); j++) { 
-      Vec2D p = poly.get(j%poly.getNumVertices()); 
-      if (move) { 
-        hpglManager.moveTo(p.x, p.y); 
-        move = false;
-      } else { 
-        hpglManager.lineTo(p.x, p.y);
-      }
+
+    switch (type) {
+
+    case PathIterator.SEG_MOVETO:
+
+      if (verbose) println("move to " + coordinates[0] + ", " + coordinates[1]);
+
+      hpglManager.moveTo(coordinates[0], coordinates[1]); 
+      lastMove.set(coordinates[0], coordinates[1]); 
+
+      break;
+    case PathIterator.SEG_LINETO:
+      if (verbose) println("line to " + coordinates[0] + ", " + coordinates[1]);
+      hpglManager.lineTo(coordinates[0], coordinates[1]); 
+      break;
+      //case PathIterator.SEG_QUADTO:
+      //  if (verbose) println("quadratic to " + coordinates[0] + ", " + coordinates[1] + ", "+ coordinates[2] + ", " + coordinates[3]);
+      //  quadraticVertex(coordinates[0], coordinates[1], coordinates[2], coordinates[3]); 
+      //  break;
+      //case PathIterator.SEG_CUBICTO:
+      //  if (verbose) println("cubic to " + coordinates[0] + ", " + coordinates[1] + ", "   + coordinates[2] + ", " + coordinates[3] + ", " + coordinates[4] + ", " + coordinates[5]);
+      //  bezierVertex(coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5]); 
+      //  break;
+    case PathIterator.SEG_CLOSE:
+      if (verbose) println("close "+ coordinates[0] + ", " + coordinates[1]);
+      hpglManager.lineTo(lastMove.x, lastMove.y); 
+      break;
+    default:
+      break;
     }
+    pi.next();
   }
 }
 
+//if (dryrun) return; 
+//hpglManager.addPenCommand(penNum); 
 
-public class IntersectionComparator implements Comparator<Vec2D> {
+//if (shape instanceof CompoundPolygon2D) { 
+//  for (Polygon2D poly : ((CompoundPolygon2D)shape).polygons) { 
+//    outlineContour(poly, penNum, dryrun);
+//  }
+//} else {
+//  Polygon2D poly; 
+//  if (!(shape instanceof Polygon2D)) { 
+//    poly = shape.toPolygon2D();
+//  } else {
+//    poly = (Polygon2D)shape;
+//  }
 
-  public Vec2D startpoint; 
-  public IntersectionComparator(Vec2D start) {
-    startpoint = start.copy();
+//  boolean move = true; 
+
+//  for (int j = 0; j<=poly.getNumVertices(); j++) { 
+//    Vec2D p = poly.get(j%poly.getNumVertices()); 
+//    if (move) { 
+//      hpglManager.moveTo(p.x, p.y); 
+//      move = false;
+//    } else { 
+//      hpglManager.lineTo(p.x, p.y);
+//    }
+//  }
+//}
+//}
+
+
+public class IntersectionComparator implements Comparator<Point2D> {
+
+  public Point2D startpoint; 
+  public IntersectionComparator(Point2D start) {
+    startpoint = (Point2D)start.clone();
   }
-  public int compare(Vec2D c1, Vec2D c2) {
-    float dist1 = startpoint.distanceTo(c1); 
-    float dist2 = startpoint.distanceTo(c2); 
+  public int compare(Point2D c1, Point2D c2) {
+    float dist1 = (float)startpoint.distanceSq(c1); 
+    float dist2 = (float)startpoint.distanceSq(c2); 
 
     if (dist1==dist2) {
       return 0;

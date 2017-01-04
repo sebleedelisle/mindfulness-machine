@@ -73,7 +73,8 @@ class HPGLManager {
 
     for (int i =0; i<interfaces.length; i++) { 
 
-      if (interfaces[i].indexOf("tty.usbserial")>-1) {
+//      if (interfaces[i].indexOf("/dev/tty.usbserial")>-1) {
+      if (interfaces[i].equals("/dev/tty.usbserial")) {
         serialNumber = i;
       }
     }
@@ -122,7 +123,7 @@ class HPGLManager {
 
     if ((printing) && (commands.size()>0)) { 
 
-      processCommand(1); 
+      processCommand(10); 
 
 
       if ((commands.size()%100) ==0) 

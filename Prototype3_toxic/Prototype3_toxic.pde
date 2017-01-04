@@ -1,4 +1,4 @@
-//import gab.opencv.*; //<>//
+//import gab.opencv.*; //<>// //<>//
 import gab.opencv.OpenCV; 
 import org.opencv.core.Mat; 
 import org.opencv.core.MatOfInt4; 
@@ -115,7 +115,7 @@ void draw() {
     Shape2D shape = shapes.get(shapenum);
     //if(shape.getBounds().width<dst.width) 
     //fillContour(shape, (shapenum%8)+1, false);
-    fillContour(shape, 1, false);
+    fillContour(shape, 1, penThickness, false);
     shapenum++;
   }
 }
@@ -198,85 +198,4 @@ void getShapesForImage(String filename, float scale) {
       index = -1;
     }
   } while ((index>=0) && (index<contours.size()));
-}
-
-class CompoundPolygon2D implements Shape2D { 
-
-  public List<Polygon2D> polygons; 
-
-  public CompoundPolygon2D(Polygon2D poly) { 
-    polygons = new  ArrayList<Polygon2D>(); 
-    polygons.add(poly);
-  }
-
-  boolean containsPoint(ReadonlyVec2D p) {
-    if (polygons.size()>0) { 
-      boolean inside = polygons.get(0).containsPoint(p); 
-      for (int i = 1; i<polygons.size(); i++) { 
-        if (polygons.get(i).containsPoint(p)) inside = !inside;
-      }
-      return inside;
-    } else { 
-      return false;
-    }
-  }
-  float getArea() {
-    if (polygons.size()==0) return 0; 
-
-    float a = polygons.get(0).getArea(); 
-    for (int i = 1; i<polygons.size(); i++) { 
-      a-=polygons.get(i).getArea();
-    }
-    return a;
-  }
-
-  Circle getBoundingCircle() {
-    if (polygons.size()==0) return new Circle(0, 0, 0); 
-    return polygons.get(0).getBoundingCircle();
-  }
-
-  Rect getBounds() {
-    if (polygons.size()==0) return new Rect(0, 0, 0, 0); 
-    return polygons.get(0).getBounds();
-  }
-
-  float getCircumference() {
-    if (polygons.size()==0) return 0; 
-    return polygons.get(0).getCircumference();
-  }
-
-  List<Line2D> getEdges() {
-    List<Line2D> edges = new ArrayList<Line2D>(); 
-    for (int i = 0; i<polygons.size(); i++) { 
-      edges.addAll(polygons.get(i).getEdges());
-    }
-    return edges;
-  };
-
-
-  Vec2D getRandomPoint() {
-    Vec2D p;
-    boolean valid = true; 
-
-    do { 
-      p = polygons.get(0).getRandomPoint();  
-      for (int i = 1; i<polygons.size(); i++) {
-        if (polygons.get(i).containsPoint(p)) { 
-          valid = false; 
-          break;
-        }
-      }
-    } while (!valid); 
-    return p;
-  }
-  Polygon2D toPolygon2D() {
-    return polygons.get(0);
-  }
-
-  CompoundPolygon2D smooth(float amount, float baseWeight) {
-    for (Polygon2D poly : polygons) { 
-      poly.smooth(amount, baseWeight);
-    }
-    return this;
-  }
 }
