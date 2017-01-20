@@ -1,0 +1,52 @@
+
+import processing.core.*;
+import gab.opencv.*;
+import processing.video.*;
+import java.awt.Rectangle;
+
+
+public class CameraManager { 
+  PImage temp; 
+  PImage scaledCamImage; 
+  OpenCV opencv;
+  Capture cam; 
+  PApplet parent; 
+  int motionLevel; 
+  Rectangle[] faces;
+  public CameraManager(PApplet theParent) {
+    opencv= new OpenCV(theParent, 320, 240);
+    opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE); 
+    scaledCamImage = createImage(320,240,parent.RGB); 
+    cam = new Capture(theParent, 640, 480);
+    cam.start();
+    parent = theParent;
+  };
+
+  public void update() { 
+    if (cam.available()) { 
+      cam.read(); 
+      scaledCamImage.copy(cam,0,0,640,480,0,0,320,240);
+      opencv.diff(cam);
+      opencv.threshold(50);
+      temp = opencv.getOutput(); 
+      //temp.resize(64,48);
+      opencv.loadImage(cam);
+      faces = opencv.detect();
+    }
+  }
+
+  public void draw() { 
+    parent.image(cam, 0, 0);
+
+    if (temp!=null) { 
+      parent.image(temp, 640, 0);
+    }
+    if(faces!=null) { 
+      for (Rectangle r : faces) { 
+        parent.stroke(255); 
+        parent.noFill(); 
+        parent.rect(r.x, r.y, r.width, r.height);
+      }
+    }
+  }
+}

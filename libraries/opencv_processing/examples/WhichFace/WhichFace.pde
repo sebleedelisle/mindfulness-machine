@@ -13,7 +13,7 @@
 
 import gab.opencv.*;
 import processing.video.*;
-import java.awt.*;
+//import java.awt.*;
 
 Capture video;
 OpenCV opencv;

@@ -10,7 +10,7 @@ import java.util.Collections;
 import de.erichseifert.gral.util.GeometryUtils; 
 
 void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) { 
-
+  //if(shape.isEmpty()) return; 
   ArrayList<Line> lines = new ArrayList<Line>(); 
 
   shape = GeometryUtils.grow(shape, -penThickness/2);
@@ -18,16 +18,16 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
   Rectangle r = shape.getBounds();
 
   int i, j; 
-  int boundspadding = 1; 
+  //int boundspadding = 1; 
 
   // convert the first three points to PVectors and draw them
   Point2D.Float p1 = new Point2D.Float(r.x, r.y); 
   Point2D.Float p2 = new Point2D.Float(r.x+r.width, r.y); 
   Point2D.Float p3 =  new Point2D.Float(r.x+r.width, r.y+r.height); 
 
-  ellipse(p1.x, p1.y, 4, 4); 
-  ellipse(p2.x, p2.y, 4, 4); 
-  ellipse(p3.x, p3.y, 4, 4);
+  //ellipse(p1.x, p1.y, 4, 4); 
+  //ellipse(p2.x, p2.y, 4, 4); 
+  //ellipse(p3.x, p3.y, 4, 4);
 
   // if second side is longer than first, switch them! 
   if (p1.distance(p2)<p2.distance(p3)) { 
@@ -76,12 +76,12 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
       ArrayList<Line> newlines = new ArrayList<Line>(); 
       Line l = new Line();
 
-      for (i = 0; i<ips.size(); i++) {
-        Point2D ip = ips.get(i); 
-        ellipseMode(RADIUS);
-        stroke(255, 50);
-        ellipse((float)ip.getX(), (float)ip.getY(), 1, 1);
-      }
+      //for (i = 0; i<ips.size(); i++) {
+      //  Point2D ip = ips.get(i); 
+      //  ellipseMode(RADIUS);
+      //  stroke(255, 50);
+      //  ellipse((float)ip.getX(), (float)ip.getY(), 1, 1);
+      //}
 
       // algorithm for making sure that line segments are inside 
 
@@ -91,7 +91,7 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
         Point2D mid = subPoints(ip2, ip1);
         mid = scalePoint(mid, 0.5);
         mid = addPoints(mid, ip1);
-        ellipse((float)mid.getX(), (float)mid.getY(), 1, 1);
+        //ellipse((float)mid.getX(), (float)mid.getY(), 1, 1);
         if (shape.contains(mid)) {
           if ((newlines.size()>0) && (l.p2.equals(new PVector((float)ip1.getX(), (float)ip1.getY())))) {
             l.p2 = new PVector((float)ip2.getX(), (float)ip2.getY());
@@ -192,18 +192,18 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
   // debug : highlight lines points dependent on mouse pos
   int highlightlineindex = (int)map(mouseX, 0, width, 0, 8); 
 
-  for (i  = 0; i<sortedLines.size(); i++) { 
-    Line line = sortedLines.get(i); 
+  //for (i  = 0; i<sortedLines.size(); i++) { 
+  //  Line line = sortedLines.get(i); 
 
-    //if (highlightlineindex == i) {
-    //  strokeWeight(2); 
-    //  stroke(255, 0, 0,128);
-    //} else { 
-    //strokeWeight(1);
-    stroke(0, 255, 0, 255);
-    // }
-    line.draw();
-  }
+  //  //if (highlightlineindex == i) {
+  //  //  strokeWeight(2); 
+  //  //  stroke(255, 0, 0,128);
+  //  //} else { 
+  //  //strokeWeight(1);
+  //  stroke(0, 255, 0, 255);
+  //  // }
+  //  line.draw();
+  //}
 
   if (!dryrun) { 
     lines = sortedLines;
@@ -254,6 +254,7 @@ void fillContour(Shape shape, int penNum, float penThickness, boolean dryrun) {
 void outlineContour(Shape shape, int penNum, boolean dryrun) { 
 
   if (dryrun) return; 
+  //if(shape.isEmpty()) return; 
   hpglManager.addPenCommand(penNum); 
   //PathIterator pi = path.getPathIterator(null);
   PathIterator pi = new FlatteningPathIterator(shape.getPathIterator(null), 0.2);

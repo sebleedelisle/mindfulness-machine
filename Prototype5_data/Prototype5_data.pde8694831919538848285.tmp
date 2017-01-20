@@ -1,0 +1,52 @@
+import gab.opencv.*;
+import processing.video.*;
+import processing.serial.Serial;
+
+CameraManager cameraManager; 
+MoodManager moodManager; 
+SensorReader sensorReader;
+
+String serialName = "/dev/tty.usbmodem1421";
+
+void setup () { 
+  //size(1440, 810, JAVA2D); 
+  fullScreen();
+  textSize(12); 
+  cameraManager = new CameraManager(this); 
+  moodManager = new MoodManager(this); 
+  sensorReader = new SensorReader(this, serialName);
+}
+
+
+void draw() { 
+  // scale to fit window
+  pushMatrix();
+  scale((float)width/1920, (float)width/1920); 
+  background(30);
+  fill(0); 
+  rect(0,0,1920,1080); 
+
+  cameraManager.update();
+  moodManager.update();
+  sensorReader.update();
+  
+  cameraManager.draw(); 
+  moodManager.draw(1920, 1080);
+  
+  sensorReader.temperature.draw(this,520,0,40,512); 
+  sensorReader.lux.draw(this,580,0,40,512); 
+  sensorReader.colourTemperature.draw(this,640,0,40,512); 
+  popMatrix();
+}
+
+void drawData(int x, int y, int w, int h) {
+ 
+  
+  
+  
+  
+}
+
+void serialEvent(Serial port) {
+  sensorReader.serialEvent(port);
+}

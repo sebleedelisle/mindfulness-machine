@@ -21,86 +21,87 @@ int shapenum = 0;
 
 float penThickness = 1.5; 
 
+color[] colours = new color[11]; 
+
 void setup() { 
-  size(1170, 800);
+  size(1920, 1080, JAVA2D);
+  noSmooth();
   hpglManager = new HPGLManager(this); 
-  makeShapes();
-//  shapes = new ArrayList<Shape>();
-//  int rows = 3; 
-//  int cols = 5; 
+  surface.setSize((int)(1080*hpglManager.aspectRatio), 1080);
 
-//  for (int i=0; i<rows*cols; i++) { 
-
-//    double xpos = i%cols*60; 
-//    double ypos = floor(i/cols)*60; 
-//    //xpos+=random(-10, 10)+20; 
-//    //ypos+=random(-10, 10)+20;
-//    xpos+=20;
-//    ypos+=20; 
-
-//    Ellipse2D.Double e = new Ellipse2D.Double(xpos, ypos, 70, 70);  
-//    Ellipse2D.Double e2 = new Ellipse2D.Double(e.x+20, e.y+20, e.width-40, e.height-40); 
-//    //if (random(1)<0.8) { 
-//    Area a = new Area(e); 
-//    a.subtract(new Area(e2)); 
-
-//    //AffineTransform at = new AffineTransform(); 
-//    //at.scale(0.5,0.5);
-//    //a.transform(at);
-
-//    shapes.add(a);
-//    //} else { 
-//    //  shapes.add(e2);
-//    //}
-//  }
-
-  long start = millis(); 
-  removeOverlaps(shapes);
-  Collections.reverse(shapes);
-  for (Shape s : shapes) {
-    outlineContour(s, 1, false);
+  colours[0] = #FF4DD6; // pink
+  colours[1] = #DE2B30;   // red
+  colours[2] = #A05C2F;// light brown
+  colours[3] = #744627;  // dark brown
+  colours[4] = #266238; // dark green 
+  colours[5] = #49AF55; // light green 
+  colours[6] = #FFE72E ; // yellow
+  colours[7] = #FF8B17 ; // orange
+  colours[8] = #6722B2 ; // purple
+  colours[9] = #293FB2 ; // navy blue
+  colours[10] = #6FC6FF ; // sky blue
+  
+  int[] selectedpens = new int[8];
+  selectedpens[0] = 3;
+  selectedpens[1] = 8;
+  selectedpens[2] = 9;
+  selectedpens[3] = 5;
+  selectedpens[4] = 1;
+  selectedpens[5] = 0;
+  selectedpens[6] = 6;
+  
+  for (int i = 0; i<7; i++) { 
+    hpglManager.setPenColour(i+1, colours[selectedpens[i]]);
   }
-  println("ovelap removal too " + (millis()-start) + "ms"); 
-  //noLoop();
+  hpglManager.setPenColour(0, #000000);  
+
+  makeShapes();
 }
 
 void draw() { 
 
 
   scale(zoom);
-
-  xzoom += (clamp(map(mouseX, width*0.1, width*0.9, 0, - width * (zoom-1)/zoom), -width * (zoom-1)/zoom, 0)-xzoom)*0.1; 
-  yzoom += (clamp(map(mouseY, height*0.1, height*0.9, 0, - height * (zoom-1)/zoom), -height * (zoom-1)/zoom, 0)-yzoom)*0.1; 
+  if (zoom==1) {
+    xzoom = 0; 
+    yzoom = 0;
+  }
+  xzoom += (constrain(map(mouseX, width*0.1, width*0.9, 0, - width * (zoom-1)/zoom), -width * (zoom-1)/zoom, 0)-xzoom)*0.1; 
+  yzoom += (constrain(map(mouseY, height*0.1, height*0.9, 0, - height * (zoom-1)/zoom), -height * (zoom-1)/zoom, 0)-yzoom)*0.1; 
   translate(xzoom, yzoom); 
 
 
-  background(0);
+  background(250, 250, 255);
   noFill(); 
-  strokeWeight(1);
+
   strokeJoin(ROUND);
   strokeCap(ROUND);
-  blendMode(ADD); 
-
-  //for (Shape s : shapes) { 
-
-  //  if (s.contains(new Point2D.Float(mouseX/zoom-xzoom, mouseY/zoom-yzoom))) { 
-  //    //fill(255,0,0);  
-  //    fillContour(s, 1, 2, true);
-  //  } else { 
-  //    //noFill();
+  //blendMode(ADD); 
+  //noFill();
+  
+  
+  
+  //for (int i = 0; i<shapes.size(); i++) {
+  //  fill(hpglManager.getPenColour(i%3+5));
+  //  stroke(0, 0, 0);
+  //  strokeWeight(2);
+  //  if (shapes.get(i).contains(mouseX, mouseY)) {
+  //    stroke(255, 0, 0);
+  //    strokeWeight(10);
+  //    fill(0, 100);
   //  }
-  //  stroke(255, 50, 50);
-  //  drawPath(s);
+  //  drawPath(shapes.get(i));
   //}
 
   //if (shapenum<shapes.size()) { 
-  //  Shape shape = shapes.get(shapenum);
+  //  Shape shape = shapes.get(pshapenum);
   //  //if(shape.getBounds().width<dst.width) 
   //  fillContour(shape, (shapenum%8)+1, penThickness, false);
   //  //fillContour(shape, 1, penThickness, false);
   //  shapenum++;
   //}
   hpglManager.update();
+  hpglManager.renderCurrent();
 }
 
 void mousePressed() { 

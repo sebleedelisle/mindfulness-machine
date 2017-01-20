@@ -19,7 +19,7 @@ void draw() {
   image(video, 0, 0);  
   opencv.loadImage(video);
   
-  opencv.updateBackground();
+  //opencv.updateBackground();
   
   opencv.dilate();
   opencv.erode();

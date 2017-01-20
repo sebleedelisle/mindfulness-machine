@@ -9,12 +9,11 @@ void keyPressed() {
     hpglManager.initHPGL();
   } else if (key == 'P') {
     println("PRINT"); 
-    hpglManager.setVelocity(200);
     hpglManager.startPrinting();
   } else if (key == 'C') {
     shapenum = 0;
     for (Shape shape : shapes) {
-      fillContour(shape, (shapenum%7)+2, penThickness, false);
+      fillContour(shape, (shapenum%7)+1, penThickness, false);
       shapenum++;
     }
   } else if (key == 'S') {

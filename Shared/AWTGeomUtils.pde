@@ -107,17 +107,24 @@ List<Shape> breakArea(Area a) {
   }
   shapes.add(path); 
 
-//  // subtract holes
+  // subtract holes
   //for (int i = 0; i<shapes.size(); i++) { 
   //  Shape shape1 = shapes.get(i); 
+  //  //if(shape1.isEmpty()) continue; 
   //  for (int j = 0; j<shapes.size(); j++) { 
   //    if (j==i) continue; 
   //    Shape shape2 = shapes.get(j); 
-  //    if (shapeCollisionTest(shape1, shape2)) { // should this be a basic collision test? 
-  //      //println("subtracting ", i, j); 
-  //      Area area = new Area(shape1); 
+      
+  //    //if(shape2.isEmpty()) continue; 
+      
+  //    if (shapeContainsShape(shape1, shape2)) { 
+  //      Area area;
+        
+  //      area = new Area(shape1); 
   //      area.subtract(new Area(shape2));
-  //      if(!area.isEmpty()) shapes.set(i, area);
+  //      shapes.set(i, area);
+  //      //shapes.set(j, new Area()); 
+        
   //    }
   //  }
   //}
@@ -130,7 +137,7 @@ boolean shapeContainsShape(Shape shape1, Shape shape2) {
     float[] coordinates = new float[6];
     int type = pi.currentSegment(coordinates);
     if ( (type == PathIterator.SEG_LINETO)) {
-     
+
       if (!shape1.contains(coordinates[0], coordinates[1])) return false;
     }
     pi.next();
@@ -160,28 +167,52 @@ Polygon createStar(float x, float y, int numsides, float innerradius, float oute
 }
 
 void removeOverlaps(List<Shape> shapes) { 
-  //shapes = new ArrayList<Shape>(shapes);
-  for (int i = 0; i<shapes.size(); i++) { 
+  long start = millis(); 
 
-    Area a1 = new Area(shapes.get(i)); 
+   for (int i = 0; i<shapes.size(); i++) { 
 
-    boolean shapeChanged = false; 
+     Area a1 = new Area(shapes.get(i)); 
 
-    for (int j = i+1; j<shapes.size(); j++) {
-      Shape s2 = shapes.get(j); 
+     boolean shapeChanged = false; 
 
-      if (shapeCollisionTest(a1, s2)) {
-        Area a2 = new Area(s2); 
-        a1.subtract(a2);
-        shapeChanged = true;
-      }
-    }
+     for (int j = i+1; j<shapes.size(); j++) {
+       Shape s2 = shapes.get(j); 
 
-    if (shapeChanged) shapes.set(i, a1);
-  }
+       if (shapeCollisionTest(a1, s2)) {
+         Area a2 = new Area(s2); 
+         a1.subtract(a2);
+         shapeChanged = true;
+       }
+     }
+
+     if (shapeChanged) shapes.set(i, a1);
+   }
+
+  //// make area with the last shape in it (the one on top); 
+  //Area a = new Area(shapes.get(shapes.size()-1)); 
+
+  //for (int i = shapes.size()-2; i>=0; i--) { 
+
+  //  Shape s = shapes.get(i); 
+  //  //if (shapeCollisionTest(a, s)) {
+  //  Area a2;
+  //  if (s instanceof Area) 
+  //    a2 = (Area)s;
+  //  else 
+  //  a2 = new Area(s); 
+  //  a2.subtract(a);
+  //  shapes.set(i, a2);
+
+  //  a.add(a2);
+  //}
+
+
+  println("ovelap removal took " + (millis()-start) + "ms");
 }
 
 boolean shapeCollisionTest(Shape s1, Shape s2) { 
+
+  if (!rectIntersectsRect(s1.getBounds2D(), s2.getBounds2D())) return false;  
 
   Area a1; 
   Area a2; 
@@ -191,6 +222,10 @@ boolean shapeCollisionTest(Shape s1, Shape s2) {
   a1.intersect(a2); 
 
   return !a1.isEmpty();
+}
+
+boolean rectIntersectsRect(Rectangle2D r1, Rectangle2D r2) { 
+  return r1.intersects(r2.getMinX(), r2.getMinY(), r2.getWidth(), r2.getHeight());
 }
 
 Point2D.Float addPoints(Point2D.Float p1, Point2D.Float p2) { 

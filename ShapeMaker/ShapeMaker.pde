@@ -28,7 +28,7 @@ void setup() {
 
   background(255); 
   stroke(0); 
-  strokeWeight(2);
+  strokeWeight(1.5);
   makeShapes();
 }
 

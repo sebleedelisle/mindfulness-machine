@@ -13,19 +13,35 @@ import java.awt.geom.AffineTransform;
 import java.util.List;
 import java.util.Collections;
 
+public class PatternGenerator {
+}
 
-
+//float genseed = 5; 
+int generationCount = 0; 
 void makeShapes() {
+  makeShapes(generationCount%2, generationCount, 0, 0);
+  
+  generationCount++; 
+  //if(generationCount%2==1) 
+  //genseed+=1;//r10000;
+}
 
+
+
+void makeShapes(int type, int seed, float stim, float happiness) {
+  
+  randomSeed(seed); 
+  
   float rnd = random(1); 
-  if (rnd<0.33)
-    shapes = getLandscapeShapes(width, height);
-  else if (rnd<0.66)
-    shapes = getSpiralShapes(width, height);     
-  else   
-    shapes = getTruchetShapes(width, height);
+  println(rnd);
+  if (type ==0)
+    shapes = getLandscapeShapes(width, height, stim, happiness);
+  else if(type == 1)
+    shapes = getSpiralShapes(width, height, stim, happiness);     
+  else if(type ==2)   
+    shapes = getTruchetShapes(width, height, stim, happiness);
+  //shapes = getTestShapes(width, height);
 
-  //shapes = getLandscapeShapes(width, height);
 
   Rectangle2D r = new Rectangle2D.Float(0, 0, width, height); 
   Area boundingRect = new Area(r); 
@@ -40,16 +56,70 @@ void makeShapes() {
     }
     a.intersect(boundingRect);
   }
+  removeOverlaps(shapes);
+
+  Collections.reverse(shapes);
+
+   hpglManager.clearBuffer();
+  for (Shape s : shapes) {
+    outlineContour(s, 0, false);
+  }
 }
 
 
-List<Shape> getTruchetShapes(float width, float height) {
+List<Shape> getTestShapes(float width, float height, float stim, float happiness) {
+  Path2D.Float s1 = new Path2D.Float();
+  List<Shape> shapes = new ArrayList<Shape>(); 
+
+  float x = 100;
+  float y = 100; 
+  float size = 100; 
+
+  Point2D.Float p1 = new Point2D.Float(x, y); 
+  Point2D.Float p2 = new Point2D.Float(x+size+0.1, y); 
+  Point2D.Float p3 = new Point2D.Float(x, y+size+0.1); 
+  Point2D.Float p4 = new Point2D.Float(x+size+0.1, y+size+0.1);
+
+  s1.moveTo(p1.x, p1.y);
+  s1.lineTo(p2.x, p2.y); 
+  s1.lineTo(p4.x, p4.y); 
+  s1.lineTo(p3.x, p3.y); 
+  s1.closePath();
+  
+  Area a1 = new Area(s1); 
+  shapes.add(a1); 
+  
+   x = 120;
+   y = 120; 
+   size =60; 
+
+   p1 = new Point2D.Float(x, y); 
+   p2 = new Point2D.Float(x+size+0.1, y); 
+   p3 = new Point2D.Float(x, y+size+0.1); 
+   p4 = new Point2D.Float(x+size+0.1, y+size+0.1);
+  s1 = new Path2D.Float();
+  s1.moveTo(p1.x, p1.y);
+  s1.lineTo(p2.x, p2.y); 
+  s1.lineTo(p4.x, p4.y); 
+  s1.lineTo(p3.x, p3.y); 
+  s1.closePath();
+
+     a1 = new Area(s1); 
+  shapes.add(a1); 
+  
+  
+  
+  return shapes;
+}
+
+
+List<Shape> getTruchetShapes(float width, float height, float stim, float happiness) {
   List<Area> shapes1 = new ArrayList<Area>(); 
   List<Area> shapes2 = new ArrayList<Area>(); 
 
 
 
-  float size = random(20, 50);
+  float size = 50;//random(20, 40);
   int colcount = floor(width/size);
   int rowcount = floor(height/size); 
   size = width/colcount; 
@@ -152,19 +222,19 @@ List<Shape> getTruchetShapes(float width, float height) {
     }
   }
 
+  int start = millis();   
   for (int i =1; i<shapes1.size(); i++) { 
-
     shapes1.get(0).add(shapes1.get(i)); 
     shapes2.get(0).add(shapes2.get(i));
   }
+  println("combining shapes took : " + (millis()-start)); 
 
   ArrayList<Shape> shapes = new ArrayList<Shape>(); 
 
-
-  //shapes.addAll(breakArea(shapes1.get(0))); 
+  //shapes.add(shapes1.get(0)); 
+  //shapes.add(shapes2.get(0)); 
+  shapes.addAll(breakArea(shapes1.get(0))); 
   //shapes.addAll(breakArea(shapes2.get(0))); 
-  shapes.add(shapes1.get(0)); 
-  shapes.add(shapes2.get(0)); 
 
 
   return shapes;
@@ -177,19 +247,19 @@ List<Shape> getTruchetShapes(float width, float height) {
 
 
 
-List<Shape> getSpiralShapes(float width, float height) {
+List<Shape> getSpiralShapes(float width, float height, float stim, float happiness) {
   List<Shape> shapes = new ArrayList<Shape>(); 
 
 
   // rotation spiral
 
-  int shapeType = millis()%4;
+  int shapeType = (int)random(4); //millis()%4;
 
   float c = 20;
 
   float maxsize = random(20, 120);
   float minsize = maxsize*random(0.2, 1);
-  int numshapes = 1200; 
+  int numshapes = 1500; 
   float shaperotation = 0; 
   float rotation = radians(137.5); 
 
@@ -212,7 +282,7 @@ List<Shape> getSpiralShapes(float width, float height) {
     float x = r * cos(a) + (width/2);
     float y = r * sin(a) + (height/2);
 
-    float size = clamp(map(i, 0, numshapes, maxsize, minsize), maxsize, minsize); 
+    float size = constrain(map(i, 0, numshapes, maxsize, minsize), maxsize, minsize); 
 
     Shape s = new Rectangle2D.Double(); 
 
@@ -243,12 +313,12 @@ List<Shape> getSpiralShapes(float width, float height) {
     shapes.add(area);
   }
 
-  removeOverlaps(shapes);
+  //removeOverlaps(shapes);
   return shapes;
 }
 
 
-List<Shape> getLandscapeShapes(float width, float height) {
+List<Shape> getLandscapeShapes(float width, float height, float stim, float happiness) {
   List<Shape> shapes = new ArrayList<Shape>(); 
 
   float spacing = 10;//random(10, 20); 
@@ -257,7 +327,7 @@ List<Shape> getLandscapeShapes(float width, float height) {
   float shift = random(-5, 5); 
   float noisedetail = random(1);
   noisedetail*=noisedetail*noisedetail; 
-  float noisescale = clamp(random(-50, 50), 0, 50);
+  float noisescale = constrain(random(-50, 50), 0, 50);
 
   float resolution = 10;//random(10, 40); 
 
@@ -310,7 +380,7 @@ List<Shape> getLandscapeShapes(float width, float height) {
     }
   }
 
-  removeOverlaps(shapes);
+  //removeOverlaps(shapes);
 
   return shapes;
 }
