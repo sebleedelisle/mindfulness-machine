@@ -60,7 +60,7 @@ void makeShapes(int type, int seed, float stim, float happiness) {
 
   Collections.reverse(shapes);
 
-   plotter.clear();
+   hpglManager.clearBuffer();
   for (Shape s : shapes) {
     outlineContour(s, 0, false);
   }
