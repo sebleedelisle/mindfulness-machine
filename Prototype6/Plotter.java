@@ -266,6 +266,15 @@ public class Plotter {
     }
   }
 
+  public void clear() { 
+    commands.clear();
+    previewImage.clear(); 
+    //renderProgress.clear(); 
+  }
+  public void startPrinting() { 
+     printing = true; 
+  }
+
   // FUNCTIONS THAT ACTUALLY DO THE DRAWING
 
   private void setVelocity(float v) { 
@@ -310,11 +319,11 @@ public class Plotter {
 
   void updatePlotterScale() { 
 
-    float plotAspectRatio = plotWidth/plotHeight; 
+    aspectRatio = (float)plotWidth/(float)plotHeight; 
     float screenAspectRatio = (float)screenWidth/(float)screenHeight; 
 
     // if the screen aspect is wider than the plotter
-    if (plotAspectRatio>screenAspectRatio) { 
+    if (aspectRatio>screenAspectRatio) { 
       scalePixelsToPlotter = plotWidth/(float)screenWidth;
     } else { 
       scalePixelsToPlotter = plotHeight/(float)screenHeight;
@@ -326,6 +335,7 @@ public class Plotter {
     p5.println("scalePixelsToPlotter", scalePixelsToPlotter); 
     p5.println("screenWidth", screenWidth); 
     p5.println("screenHeight", screenHeight);
+    p5.println("aspect ratio", aspectRatio);
 
     previewImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, scalePixelsToPlotter);
     progressImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, scalePixelsToPlotter);
@@ -407,7 +417,7 @@ public class Plotter {
     plotWidth = Integer.parseInt(tokens[2]); 
     plotHeight = Integer.parseInt(tokens[3]); 
 
-    updatePlotterScale();
+
 
     // The OF commmand returns the plotter units per mm in both the x and y axis
     // This assumes that they are the same, which is probably an OK assumption. 
@@ -448,7 +458,9 @@ public class Plotter {
     // 16 buffer is not empty and plotter is paused (pause button pressed)
     // 24 Buffer is empty and plotter is paused
     p5.println("Plotter status   : "+read( escapeChar+".O"));
-
+    
+    updatePlotterScale();
+    
     // set plotter in absolute mode
     send("PA"); 
 

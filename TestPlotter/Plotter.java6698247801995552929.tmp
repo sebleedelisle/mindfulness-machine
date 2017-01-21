@@ -12,12 +12,12 @@ import processing.serial.*;
 public class Plotter { 
 
   final static int COMMAND_MOVETO = 0; 
-  final static int COMMAND_LINETO = 1; 
-  final static int COMMAND_CIRCLE = 2;
-  final static int COMMAND_DOT = 3; 
-  final static int COMMAND_VELOCITY = 4;  
-  final static int COMMAND_FORCE = 5; 
-  final static int COMMAND_PEN_CHANGE = 6; 
+  final int COMMAND_LINETO = 1; 
+  final int COMMAND_CIRCLE = 2;
+  final int COMMAND_DOT = 3; 
+  final int COMMAND_VELOCITY = 4;  
+  final int COMMAND_FORCE = 5; 
+  final int COMMAND_PEN_CHANGE = 6; 
 
   ArrayList<Command> commands; 
 
@@ -36,9 +36,9 @@ public class Plotter {
   int screenHeight = 600; 
 
   CommandRenderer previewImage; 
-  CommandRenderer progressImage; 
+  //boolean previewDirty = true; 
+  PGraphics progressImage;
 
-  PenManager penManager;  
   int currentPen; 
   boolean isPenDown; 
   PVector lastPlotPosition; 
@@ -57,10 +57,10 @@ public class Plotter {
 
     //serial = null;
     p5 = processing;
-    debug = false;
+    debug = true;
     dry = false;
 
-    printing = false;  // if true, we're sending commands to the plotter
+    printing = true;  // if true, we're sending commands to the plotter
     initialised = false;  // true once we're sure we have a handshake with the plotter
     lastPlotPosition = new PVector(0, 0); // used to store where the plotter is so we can measure how far it's drawn
     currentPen = 0;
@@ -69,15 +69,8 @@ public class Plotter {
 
     this.screenWidth = screenwidth; 
     this.screenHeight = screenheight;
-
-    // defaults
-    plotWidth = 16158; 
-    plotHeight = 11040; 
-
-    penManager = new PenManager(p5);
-
-    previewImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, 1); 
-    progressImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, 1);
+    
+    previewImage = new CommandRenderer(p5, screenWidth, screenHeight,1); 
   }
 
 
@@ -89,13 +82,9 @@ public class Plotter {
     //float buffer = read( escapeChar+".B")
 
 
-    //p5.println(p5.frameCount + "Buffer remaining : "+read( escapeChar+".B"));
-    //p5.println("Buffer remaining : "+read( escapeChar+".L"));
-    //p5.println("Plotter status   : "+read( escapeChar+".O"));
-
     if ((printing) && (commands.size()>0)) { 
 
-      processCommand(1); 
+      processCommand(10); 
       //previewDirty = true; 
       //if ((commands.size()%100) ==0) 
       //println("COMMANDS TO PROCESS : " + commands.size()); 
@@ -103,25 +92,6 @@ public class Plotter {
     } else { 
       return false ;
     }
-  }
-
-  public void renderPreview() { 
-    previewImage.render();
-  }
-  public void renderProgress() { 
-    progressImage.render();
-  }
-
-  void setPenColour(int index, int c) { 
-    penManager.setColour(index, c);
-  }
-
-  int getPenColour(int index) { 
-    return penManager.getColour(index);
-  }
-
-  void setPenThickness(int index, float t) { 
-    penManager.setThickness(index, t*plotterUnitsPerMM);
   }
 
   void plotLine(float x1, float y1, float x2, float y2) { 
@@ -143,7 +113,7 @@ public class Plotter {
   void moveTo(PVector p) { 
     p = screenToPlotter(p); 
     //if (currentPosition.dist(p)>accuracy) { 
-    addCommand(COMMAND_MOVETO, p.x, p.y);
+    commands.add(new Command(COMMAND_MOVETO, (int)p.x, (int)p.y));
     //   currentPosition.set(p);
     //}
   }
@@ -156,7 +126,7 @@ public class Plotter {
     p = screenToPlotter(p);
 
     //if (currentPosition.dist(p)>accuracy) { 
-    addCommand(COMMAND_LINETO, p.x, p.y);
+    commands.add(new Command(COMMAND_LINETO, p.x, p.y));
     //  currentPosition.set(p);
     //  previewDirty = true;
     //}
@@ -167,41 +137,19 @@ public class Plotter {
   }
   void plotDot(PVector p ) { 
     p = screenToPlotter(p);
-    addCommand(COMMAND_DOT, p.x, p.y);
+    commands.add(new Command(COMMAND_DOT, p.x, p.y));
     //previewDirty = true;
   }
 
-  void addCommand(int type, float p1, float p2) { 
-    //p5.println("add command float ", type, p1, p2); 
-    addCommand(type, (int)p1, new int[]{(int)p2});
-  }
-
-  void addCommand(int type, int p1, int ... arguments) { 
-    Command c;  
-    //p5.println("add command args ", type, p1, arguments.length); 
-    if (arguments.length==0) { 
-      c = new Command(type, p1);
-    } else if (arguments.length==1) { 
-      c = new Command(type, p1, arguments[0]);
-    } else if (arguments.length==2) { 
-      c = new Command(type, p1, arguments[0], arguments[1]);
-    } else { 
-      c = new Command(type, p1);
-    }
-
-    commands.add(c); 
-    previewImage.renderCommand(c);
-  }
-
   void addForceCommand(int f) { 
-    addCommand(COMMAND_FORCE, f, 0);
+    commands.add(new Command(COMMAND_FORCE, f, 0));
   }
   void addVelocityCommand(int v) { 
-    addCommand(COMMAND_VELOCITY, v, 0);
+    commands.add(new Command(COMMAND_VELOCITY, v, 0));
   }
   void selectPen(int p) { 
     //currentPen = p; 
-    addCommand(COMMAND_PEN_CHANGE, p, 0);
+    commands.add(new Command(COMMAND_PEN_CHANGE, p, 0));
   }
 
   void plotRect(float x, float y, float w, float h) { 
@@ -215,7 +163,7 @@ public class Plotter {
   void plotCircle(float x, float y, float r) { 
     PVector p = screenToPlotter(new PVector(x, y)); 
     int cr = p5.round(r * scalePixelsToPlotter); 
-    addCommand(COMMAND_CIRCLE, p5.round(p.x), p5.round(p.y), cr) ;
+    commands.add(new Command(COMMAND_CIRCLE, p5.round(p.x), p5.round(p.y), cr)) ;
     //previewDirty = true;
   }
 
@@ -226,8 +174,6 @@ public class Plotter {
 
       Command c = (Command)commands.get(0);
       commands.remove(0); 
-
-      progressImage.renderCommand(c); 
 
       if (c.c == COMMAND_MOVETO) { 
         plotMoveTo(c.p1, c.p2);
@@ -327,9 +273,9 @@ public class Plotter {
     p5.println("screenWidth", screenWidth); 
     p5.println("screenHeight", screenHeight);
 
-    previewImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, scalePixelsToPlotter);
-    progressImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, scalePixelsToPlotter);
-    //previewImage.smooth(); 
+    previewImage = new CommandRenderer(p5, screenWidth, screenHeight, scalePixelsToPlotter);
+
+    previewImage.smooth(); 
     //previewDirty = true;
   }
 
@@ -378,11 +324,10 @@ public class Plotter {
     // TODO try catch around serial connection - to allow retries for serial
     if (serialNumber!=-1) {
       p5.println("FOUND USB SERIAL at index "+serialNumber);
-      
-      p5.println("connecting to " + interfaces[serialNumber]); 
+      p5.println(interfaces[serialNumber]);
+
       serial = new Serial(p5, interfaces[serialNumber]);
-      p5.println("getting init data"); 
-       
+
       getInitDataFromPlotter(); 
 
       selectPen(0);
@@ -394,8 +339,7 @@ public class Plotter {
   }
 
   void getInitDataFromPlotter() { 
-    // reset plotter and empty buffer
-    send(escapeChar+".K");
+
     plotterID = read( "OI"); 
     p5.println("Plotter ID       : ", plotterID); 
 
@@ -406,7 +350,7 @@ public class Plotter {
     String[] tokens = r.split(",");
     plotWidth = Integer.parseInt(tokens[2]); 
     plotHeight = Integer.parseInt(tokens[3]); 
-
+    
     updatePlotterScale();
 
     // The OF commmand returns the plotter units per mm in both the x and y axis
@@ -451,7 +395,7 @@ public class Plotter {
 
     // set plotter in absolute mode
     send("PA"); 
-
+    
     selectPen(0);
 
     initialised = true;
@@ -484,20 +428,11 @@ public class Plotter {
 
       result = ""; 
       // waiting for a LF ended string - TODO timeout? 
-      int start = p5.millis();
-      int timeoutmax = 5000; // 5 seconds timeout
-      boolean timedout = false; 
-      while ((result.indexOf(termChar)<0) && !timedout) {
+      while (result.indexOf(termChar)<0) {
         if (serial.available()>0) 
           result = result+ serial.readString();
-        timedout = (p5.millis()-start>timeoutmax);
       }
-
       result = result.replace(Character.toString(termChar), "");
-
-      if (timedout) { 
-        p5.println("Serial error - timed out");
-      }
     }
 
     return result;
@@ -536,11 +471,5 @@ public class Plotter {
     if (debug)
       PApplet.println("send: "+command);
     request(false, command, arguments);
-  }
-
-  public void close() { 
-    //send(escapeChar+".K");
-    send(escapeChar+".K");
-    p5.delay(1000);
   }
 }
