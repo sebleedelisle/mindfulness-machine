@@ -9,6 +9,8 @@ public class CommandRenderer {
   boolean drawing; 
   PVector penPos; 
   PenManager penManager; 
+  int paperColour; 
+  int currentPen; 
 
   public CommandRenderer(PApplet processing, PenManager penmanager, int w, int h, float pixelToPlotterScale) {
     p5 = processing;
@@ -18,15 +20,18 @@ public class CommandRenderer {
     plotterToPixelsScale = 1/pixelToPlotterScale * 2; 
     penPos = new PVector(0, 0); 
     g.smooth();
-
+    
+    paperColour = p5.color(240,248,255); 
+    
     clear();
   }
 
   public void clear() { 
 
-    if (drawing) g.endShape(); 
+    if (drawing) g.endDraw(); 
 
     g.beginDraw(); 
+    g.blendMode(g.BLEND);
     g.noFill(); 
     g.stroke(0); 
     g.strokeWeight(1);
@@ -56,8 +61,11 @@ public class CommandRenderer {
     } else if (c.c == Plotter.COMMAND_PEN_CHANGE) { 
 
       startDrawing(); 
-      g.stroke(penManager.getColour(c.p1));
+      
+      g.stroke(penManager.getColour(c.p1), 150);
       g.strokeWeight(penManager.getThickness(c.p1)*0.7f);
+      //p5.println("Command Renderer set stroke weight : ", penManager.getThickness(c.p1)*0.7f);
+      
     }
   }
 
@@ -65,8 +73,11 @@ public class CommandRenderer {
     if (!drawing) { 
       g.beginDraw();
       g.pushMatrix(); 
-      g.scale(plotterToPixelsScale, plotterToPixelsScale); 
+      g.translate(0,g.height); 
+      g.scale(plotterToPixelsScale, -plotterToPixelsScale); 
       drawing = true;
+      g.strokeJoin(g.ROUND);
+      g.strokeCap(g.ROUND);
     }
   }
   public void endDrawing() { 

@@ -19,8 +19,9 @@ public class PatternGenerator {
 //float genseed = 5; 
 int generationCount = 0; 
 void makeShapes() {
-  makeShapes(generationCount%2, generationCount, 0, 0);
-  
+  //makeShapes(generationCount%2, generationCount, 0, 0);
+  makeShapes(0, generationCount, 0, 0, ((float)height*plotter.aspectRatio), height);
+
   generationCount++; 
   //if(generationCount%2==1) 
   //genseed+=1;//r10000;
@@ -28,22 +29,25 @@ void makeShapes() {
 
 
 
-void makeShapes(int type, int seed, float stim, float happiness) {
-  
+void makeShapes(int type, int seed, float happiness, float stim, float w, float h) {
+
+    //type = seed%2;
   randomSeed(seed); 
-  
+  noiseSeed(seed);
+  println ("makeShapes seed = " + seed); 
+
   float rnd = random(1); 
-  println(rnd);
+  //println(rnd);
   if (type ==0)
-    shapes = getLandscapeShapes(width, height, stim, happiness);
-  else if(type == 1)
-    shapes = getSpiralShapes(width, height, stim, happiness);     
-  else if(type ==2)   
-    shapes = getTruchetShapes(width, height, stim, happiness);
+    shapes = getLandscapeShapes(w, h, happiness, stim);
+  else if (type == 1)
+    shapes = getSpiralShapes(w, h, happiness, stim);     
+  else if (type ==2)   
+    shapes = getTruchetShapes(w, h, happiness, stim);
   //shapes = getTestShapes(width, height);
 
 
-  Rectangle2D r = new Rectangle2D.Float(0, 0, width, height); 
+  Rectangle2D r = new Rectangle2D.Float(0, 0, w, h); 
   Area boundingRect = new Area(r); 
   for (int i = 0; i<shapes.size(); i++) {
     Shape s = shapes.get(i); 
@@ -60,60 +64,255 @@ void makeShapes(int type, int seed, float stim, float happiness) {
 
   Collections.reverse(shapes);
 
-   plotter.clear();
+  plotter.clear();
   for (Shape s : shapes) {
     outlineContour(s, 0, false);
   }
 }
 
 
-List<Shape> getTestShapes(float width, float height, float stim, float happiness) {
-  Path2D.Float s1 = new Path2D.Float();
+List<Shape> getSpiralShapes(float width, float height, float happiness, float stim) {
   List<Shape> shapes = new ArrayList<Shape>(); 
 
-  float x = 100;
-  float y = 100; 
-  float size = 100; 
+  println("getSpiralShapes " + stim + " " + happiness);
 
-  Point2D.Float p1 = new Point2D.Float(x, y); 
-  Point2D.Float p2 = new Point2D.Float(x+size+0.1, y); 
-  Point2D.Float p3 = new Point2D.Float(x, y+size+0.1); 
-  Point2D.Float p4 = new Point2D.Float(x+size+0.1, y+size+0.1);
+  JSONObject json = new JSONObject(); 
+  // rotation spiral
+  // shapeTypes : 
+  // 0 : Circle
+  // 1 : Square
+  // 2 : Polygon with 5 to 10 sides
+  // 3 : Star
+  int shapeType = (int)random(4); 
+  json.setInt("shapeType", shapeType); 
 
-  s1.moveTo(p1.x, p1.y);
-  s1.lineTo(p2.x, p2.y); 
-  s1.lineTo(p4.x, p4.y); 
-  s1.lineTo(p3.x, p3.y); 
-  s1.closePath();
-  
-  Area a1 = new Area(s1); 
-  shapes.add(a1); 
-  
-   x = 120;
-   y = 120; 
-   size =60; 
+  float c = 20;
 
-   p1 = new Point2D.Float(x, y); 
-   p2 = new Point2D.Float(x+size+0.1, y); 
-   p3 = new Point2D.Float(x, y+size+0.1); 
-   p4 = new Point2D.Float(x+size+0.1, y+size+0.1);
-  s1 = new Path2D.Float();
-  s1.moveTo(p1.x, p1.y);
-  s1.lineTo(p2.x, p2.y); 
-  s1.lineTo(p4.x, p4.y); 
-  s1.lineTo(p3.x, p3.y); 
-  s1.closePath();
+  float maxsize = random(20, 120);
+  float minsize = maxsize*random(0.5, 1.2);
+  json.setFloat("maxSize", maxsize); 
+  json.setFloat("minSize", minsize);
 
-     a1 = new Area(s1); 
-  shapes.add(a1); 
-  
-  
-  
+  int numshapes = 2200; 
+  float shaperotation = 1; 
+
+
+  float rnd = random(1); 
+  float rnd2 = random(0, 3); 
+  // if it's square then add random shape rotation 
+  if (shapeType==2) {
+    if (rnd<0.3) shaperotation = 0;
+    else if (rnd<0.66) shaperotation = 1; 
+    else shaperotation = rnd2;
+  }
+
+  float rotation = radians(137.5); 
+  //do we use standard Phillotaxis rotation ?  
+  // if unhappy then more likely to deviate
+  rnd = random(1); 
+  rnd2 = random(5,180); 
+  if (rnd>happiness) rotation = radians(rnd2); 
+  // reverse the spin
+  if (random(1)<0.5) rotation*=-1; 
+
+  json.setFloat("rotation", rotation); 
+  json.setFloat("rotationDegrees", degrees(rotation)); 
+  json.setFloat("shapeRotation", shaperotation); 
+
+  // for types 2 and 3
+  int numsides = floor(random(3, 6)); 
+  json.setInt("numSides", numsides);
+
+
+  // width/height for circles and rectangles
+  float aspect = 1;
+  rnd = random(1); 
+  if (shapeType<2) { 
+    aspect = rnd; 
+    if (aspect>0.5) aspect = 1; 
+    else aspect = map(aspect, 0, 0.5, 0.75, 1);
+  }
+  json.setFloat("aspect", aspect); 
+
+  float noiseLevel = 0;//
+
+  // figure out noiselevel dependent on mood. 
+  // if unhappy then stimulation creates chaos
+  // if happy then stimulation creates detail? 
+ 
+   if (happiness<0.5) {
+    float happyeffector =(0.5-happiness)*2; // happyeffector now between 0 and 1 for least happy 
+    float stimeffector = stim; //  between 0 and 1 
+
+    noiseLevel = stimeffector*happyeffector; // between 0 and 1
+  }
+
+  json.setFloat("noiseLevel", noiseLevel); 
+
+  float noiseFrequency = 0;
+  noiseFrequency = random(1)+(stim*2); 
+  if (noiseLevel == 0) noiseFrequency = 0; 
+
+  json.setFloat("noiseFrequency", noiseFrequency); 
+  rnd = random(0.3); 
+  // TODO - clamp ? 
+  float starinnersize = map(stim+rnd, 0, 1.3, 0.6,0.15); 
+
+
+  for (int i = numshapes; i >=1; i--) {  
+
+    float a = i * rotation;
+    float r = c * sqrt(i);
+    float x = r * cos(a) + (width/2);
+    float y = r * sin(a) + (height/2);
+
+    float size = constrain(map(i, 0, numshapes, maxsize, minsize), minsize, maxsize); 
+
+    Shape s = new Rectangle2D.Double(); 
+
+    float noiseAmount = (noise(i*noiseFrequency)*2-1) * noiseLevel; 
+
+    switch(shapeType) { 
+    case 0 : // Circle
+      size*=map(noiseAmount, -1, 1, 0.0, 1.5); 
+      s = new Ellipse2D.Double(-size/2/aspect, (-size/2)*aspect, size/aspect, size*aspect);  
+      break;
+
+    case 1 : // square
+      size*=map(noiseAmount, -1, 1, 0.1, 1.8); 
+      s = new Rectangle2D.Double(-size/2/aspect, -size/2*aspect, size/aspect, size*aspect);  
+      break; 
+
+    case 2 : // poly
+      size*=map(noiseAmount, -1, 1, 0.0, 1.5); 
+      s = createPolygon(0, 0, numsides, size);
+      break ; 
+
+    case 3 : 
+      size*=map(noiseAmount, -1, 1, 0.1, 1.8); 
+      //s = createStar(0, 0, numsides, size, size*random(0.3, 0.9)); 
+      s = createStar(0, 0, numsides, size, size*starinnersize);//;//map(cos(i*0.1), 1, -1, 0.3, 0.9)); 
+      break;
+    } 
+
+    Area area = new Area(s); 
+    AffineTransform at = new AffineTransform(); 
+    at.translate(x, y);
+    at.rotate(a*shaperotation); 
+
+    area.transform(at);
+    shapes.add(area);
+  }
+  println(json);
+
+  //removeOverlaps(shapes);
   return shapes;
 }
 
 
-List<Shape> getTruchetShapes(float width, float height, float stim, float happiness) {
+List<Shape> getLandscapeShapes(float width, float height, float happiness, float stim) {
+  List<Shape> shapes = new ArrayList<Shape>(); 
+
+  JSONObject json = new JSONObject(); 
+
+  float spacing = 10;//random(10, 20); 
+  float wavescale = random(5,100); random(5, 50); 
+  float wavelength = random(0.1,2);//random(0.1, 5); 
+  float shift = random(-2,2);//random(-5, 5); 
+  //float noisedetail = random(1);
+ // noisedetail*=noisedetail*noisedetail; 
+  
+  //float noisescale = constrain(random(-50, 50), 0, 50);
+  
+    float noiseLevel = random(0,0.03);//
+    if(noiseLevel<0.015) noiseLevel = 0;
+
+  // figure out noiselevel dependent on mood. 
+  // if unhappy then stimulation creates chaos
+  // if happy then stimulation creates detail? 
+ 
+   if (happiness<0.5) {
+    float happyeffector =(0.5-happiness)*2; // happyeffector now between 0 and 1 for least happy 
+    float stimeffector = stim; //  between 0 and 1 
+
+    noiseLevel = stimeffector*happyeffector; // between 0 and 1
+  }
+  noiseLevel*=200; //50 
+
+  json.setFloat("noiseLevel", noiseLevel); 
+
+  float noiseFrequency = 0;
+  noiseFrequency = random(1)+(stim*2); 
+  if (noiseLevel == 0) noiseFrequency = 0; 
+
+  json.setFloat("noiseFrequency", noiseFrequency); 
+
+  
+
+  float resolution = 10;//random(10, 40); 
+
+  json.setFloat("spacing", spacing); 
+  json.setFloat("waveScale", wavescale); 
+  json.setFloat("waveLength", wavelength); 
+  json.setFloat("shift", shift); 
+
+  boolean linear = false;//random(1)<0.5; 
+
+  if (linear) { 
+    // linear
+    for (float y = -wavescale-noiseLevel; y<height+wavescale+noiseLevel; y+=spacing) { 
+      Path2D s = new Path2D.Float();
+      s.moveTo(0, height); 
+      for (float x = 0; x<=width+resolution; x+=resolution) { 
+        float offsetx = 0;//sin(radians(x))*5; 
+        float offsety = sin(radians(x+(y*shift))*wavelength)*wavescale; 
+        offsety += noise(x*noiseFrequency, y*noiseFrequency)*noiseLevel;
+        s.lineTo(x+offsetx, y+offsety);
+      }
+      s.lineTo(width, height); 
+      shapes.add(s);
+    }
+  } else {
+    // circular
+    wavelength = ceil(wavelength);
+    //spacing*=0.7; 
+    wavescale*=0.3; 
+    resolution = 2; 
+    float noisescale = noiseLevel*3;
+    float changerate = random(0.001, 0.1); // amount of change of noise between layers 
+
+    float extent = dist(0, 0, width/2, height/2)+wavescale+noisescale; 
+    for (float r = extent; r>=0; r-=spacing) { 
+      resolution = map(r, 0, extent, 5, 1); 
+      int iterations = floor(360/resolution); 
+      resolution = 360/iterations; 
+
+      Path2D s = new Path2D.Float();
+      for (float a = 0; a<360; a+=resolution) { 
+
+        float offsetr = sin(radians(a+(r*shift))*wavelength)*wavescale; 
+        offsetr += noise(sin(a)*noiseFrequency*100, r*changerate)*noisescale*map(r/extent, 0, 1, 0.3,1);
+        float x = width/2 + cos(radians(a))*(r+offsetr); 
+        float y = height/2 + sin(radians(a))*(r+offsetr);
+        if (a==0) { 
+          s.moveTo(x, y);
+        } else { 
+          s.lineTo(x, y);
+        }
+      }
+      s.closePath();
+      shapes.add(s);
+    }
+  }
+
+  //removeOverlaps(shapes);
+  println(json);
+  return shapes;
+}
+
+
+
+List<Shape> getTruchetShapes(float width, float height, float happiness, float stim) {
   List<Area> shapes1 = new ArrayList<Area>(); 
   List<Area> shapes2 = new ArrayList<Area>(); 
 
@@ -243,144 +442,47 @@ List<Shape> getTruchetShapes(float width, float height, float stim, float happin
 
 
 
-
-
-
-
-List<Shape> getSpiralShapes(float width, float height, float stim, float happiness) {
+List<Shape> getTestShapes(float width, float height, float happiness, float stim) {
+  Path2D.Float s1 = new Path2D.Float();
   List<Shape> shapes = new ArrayList<Shape>(); 
 
+  float x = 100;
+  float y = 100; 
+  float size = 100; 
 
-  // rotation spiral
+  Point2D.Float p1 = new Point2D.Float(x, y); 
+  Point2D.Float p2 = new Point2D.Float(x+size+0.1, y); 
+  Point2D.Float p3 = new Point2D.Float(x, y+size+0.1); 
+  Point2D.Float p4 = new Point2D.Float(x+size+0.1, y+size+0.1);
 
-  int shapeType = (int)random(4); //millis()%4;
+  s1.moveTo(p1.x, p1.y);
+  s1.lineTo(p2.x, p2.y); 
+  s1.lineTo(p4.x, p4.y); 
+  s1.lineTo(p3.x, p3.y); 
+  s1.closePath();
 
-  float c = 20;
+  Area a1 = new Area(s1); 
+  shapes.add(a1); 
 
-  float maxsize = random(20, 120);
-  float minsize = maxsize*random(0.2, 1);
-  int numshapes = 1500; 
-  float shaperotation = 0; 
-  float rotation = radians(137.5); 
+  x = 120;
+  y = 120; 
+  size =60; 
 
-  float rnd = random(1); 
+  p1 = new Point2D.Float(x, y); 
+  p2 = new Point2D.Float(x+size+0.1, y); 
+  p3 = new Point2D.Float(x, y+size+0.1); 
+  p4 = new Point2D.Float(x+size+0.1, y+size+0.1);
+  s1 = new Path2D.Float();
+  s1.moveTo(p1.x, p1.y);
+  s1.lineTo(p2.x, p2.y); 
+  s1.lineTo(p4.x, p4.y); 
+  s1.lineTo(p3.x, p3.y); 
+  s1.closePath();
 
-  // do shapes rotate around with the main rotation? 
-  if (rnd<0.3) shaperotation = 0;
-  else if (rnd<0.66) shaperotation = 1; 
-  else shaperotation = random(0, 3); 
-
-  //do we use standard Phillotaxis rotation ?  
-  rnd = random(1); 
-  if (rnd<0.7) rotation = radians(random(5, 180)); 
-  if (random(1)<0.5) rotation*=-1; 
-
-  for (int i = numshapes; i >=1; i--) {  
-
-    float a = i * rotation;
-    float r = c * sqrt(i);
-    float x = r * cos(a) + (width/2);
-    float y = r * sin(a) + (height/2);
-
-    float size = constrain(map(i, 0, numshapes, maxsize, minsize), maxsize, minsize); 
-
-    Shape s = new Rectangle2D.Double(); 
-
-    switch(shapeType) { 
-    case 0 : // Circle
-      s = new Ellipse2D.Double(-size/2, -size/2, size, size);  
-      break;
-
-    case 1 : // square
-      s = new Rectangle2D.Double(-size/2, -size/2, size, size);  
-      break; 
-
-    case 2 : // poly
-      s = createPolygon(0, 0, floor(random(5, 10)), size);
-      break ; 
-
-    case 3 : 
-      s = createStar(0, 0, floor(random(5, 10)), size, size*random(0.3, 0.9)); 
-      break;
-    } 
-
-    Area area = new Area(s); 
-    AffineTransform at = new AffineTransform(); 
-    at.translate(x, y);
-    at.rotate(a*shaperotation); 
-
-    area.transform(at);
-    shapes.add(area);
-  }
-
-  //removeOverlaps(shapes);
-  return shapes;
-}
+  a1 = new Area(s1); 
+  shapes.add(a1); 
 
 
-List<Shape> getLandscapeShapes(float width, float height, float stim, float happiness) {
-  List<Shape> shapes = new ArrayList<Shape>(); 
-
-  float spacing = 10;//random(10, 20); 
-  float wavescale = random(5, 50); 
-  float wavelength = random(0.1, 5); 
-  float shift = random(-5, 5); 
-  float noisedetail = random(1);
-  noisedetail*=noisedetail*noisedetail; 
-  float noisescale = constrain(random(-50, 50), 0, 50);
-
-  float resolution = 10;//random(10, 40); 
-
-  boolean linear = random(1)<0.5; 
-
-  if (linear) { 
-    // linear
-    for (float y = -wavescale-noisescale; y<height+wavescale+noisescale; y+=spacing) { 
-      Path2D s = new Path2D.Float();
-      s.moveTo(0, height); 
-      for (float x = 0; x<=width+resolution; x+=resolution) { 
-        float offsetx = 0;//sin(radians(x))*5; 
-        float offsety = sin(radians(x+(y*shift))*wavelength)*wavescale; 
-        offsety += noise(x*noisedetail, y*noisedetail)*noisescale;
-        s.lineTo(x+offsetx, y+offsety);
-      }
-      s.lineTo(width, height); 
-      shapes.add(s);
-    }
-  } else {
-    // circular
-    wavelength = ceil(wavelength);
-    //spacing*=0.7; 
-    wavescale*=0.3; 
-    resolution = 2; 
-    noisescale*=3;
-    float changerate = random(0.001, 0.1); // amount of change of noise between layers 
-
-    float extent = dist(0, 0, width/2, height/2)+wavescale+noisescale; 
-    for (float r = extent; r>=0; r-=spacing) { 
-      resolution = map(r, 0, extent, 5, 1); 
-      int iterations = floor(360/resolution); 
-      resolution = 360/iterations; 
-
-      Path2D s = new Path2D.Float();
-      for (float a = 0; a<360; a+=resolution) { 
-
-        float offsetr = sin(radians(a+(r*shift))*wavelength)*wavescale; 
-        offsetr += noise(sin(a)*noisedetail*100, r*changerate)*noisescale;
-        float x = width/2 + cos(radians(a))*(r+offsetr); 
-        float y = height/2 + sin(radians(a))*(r+offsetr);
-        if (a==0) { 
-          s.moveTo(x, y);
-        } else { 
-          s.lineTo(x, y);
-        }
-      }
-      s.closePath();
-      shapes.add(s);
-    }
-  }
-
-  //removeOverlaps(shapes);
 
   return shapes;
 }

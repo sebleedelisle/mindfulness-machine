@@ -1,0 +1,1 @@
+../Shared/CameraManager.java
