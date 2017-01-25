@@ -55,15 +55,15 @@ public class MoodManager {
 
   public void update() { 
     //while (p5.millis()*timeSpeed/updateInterval>updateCount) { 
-      currentTime = (Calendar)startTime.clone();
-      currentTime.add(Calendar.MILLISECOND, p5.round(p5.millis()*timeSpeed));
-     //updateCount++;
+    currentTime = (Calendar)startTime.clone();
+    currentTime.add(Calendar.MILLISECOND, p5.round(p5.millis()*timeSpeed));
+    //updateCount++;
     //}
     vcirc.setValue(calculateDailyCircadian(currentTime)*1.15f);
     vhorm.setValue(calculateWeeklyCircadian(currentTime));
     // add a little noise to the happiness factor
-    happy.setValue((vcirc.value*0.2f) + (vhorm.value*0.8f) + ((p5.noise((float)p5.millis()*timeSpeed*0.0005f)-0.5f)*0.1f));
-  
+    happy.setValue((vcirc.value*0.2f) + (vhorm.value*0.8f) + ((p5.noise((float)p5.millis()*timeSpeed*0.0001f)-0.5f)*0.1f));
+
 
 
     float sent = sentiment.targetValue; 
@@ -109,11 +109,11 @@ public class MoodManager {
   public void draw() { 
 
     float dataheight = 384; 
-    
+
     cameraManager.draw();  
     cameraManager.motion.draw(p5, 700, 0, 40, dataheight); 
     cameraManager.crowd.draw(p5, 760, 0, 40, dataheight); 
-    
+
     sensorReader.temperature.draw(p5, 520, 0, 40, dataheight); 
     sensorReader.lux.draw(p5, 580, 0, 40, dataheight); 
     sensorReader.colourTemperature.draw(p5, 640, 0, 40, dataheight); 
@@ -128,22 +128,31 @@ public class MoodManager {
   public void renderCamera(int x, int y, int w, int h) { 
     float renderAspect =  (float)w/ (float)h; 
     float cameraAspect = (float)cameraManager.camWidth/ (float)cameraManager.camHeight; 
-    
+
     float renderWidth, renderHeight; 
-    if(renderAspect<cameraAspect) { 
+    if (renderAspect<cameraAspect) { 
       //p5.println('1'); 
       renderWidth = w; 
       renderHeight = w/cameraAspect; 
-      y+=(h-renderHeight)/2; 
+      y+=(h-renderHeight)/2;
     } else { 
       //p5.println('2'); 
       renderHeight = h; 
       renderWidth = h*cameraAspect; 
-      x+=(w-renderWidth)/2; 
+      x+=(w-renderWidth)/2;
     }
+
+    p5.image(cameraManager.cam, x, y, renderWidth, renderHeight);
+  }
+
+  // returns normalised value
+  float getHappiness() {
+    return p5.map(sentiment.getValue(), -1,1,0,1); 
+  }
+
+  float getStimulation() {
     
-    p5.image(cameraManager.cam,x, y, renderWidth, renderHeight);  
-    
+    return p5.map(stimulation.getValue(), -1,1,0,1); 
   }
 
   float calculateWeeklyCircadian(Calendar c) { 

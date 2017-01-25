@@ -92,13 +92,8 @@ void draw() {
   plotter.update();
   //plotter.renderPreview();
 
-  
   if (shapes!=null) { 
-    fill(250); 
-    rect(0,0,plotter.screenWidth, plotter.screenHeight); 
     for (int i = 0; i<shapes.size(); i++) { 
-      stroke(0); 
-      fill(plotter.getPenColour(shapes.get(i).getPenNumber())); 
       drawPath(shapes.get(i).getShape());
     }
   }

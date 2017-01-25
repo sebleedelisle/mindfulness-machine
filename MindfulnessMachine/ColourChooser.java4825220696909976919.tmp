@@ -198,7 +198,7 @@ public class ColourChooser {
        p5.ellipse(x+w/2,p5.map(i,7,0,y+r,y+h-r),r,r); 
        p5.fill(colours[chosenColours.get(i)]); 
        p5.noStroke();
-       p5.ellipse(x+w/2,p5.map(i,7,0,y+r,y+h-r),r-4,r-4); 
+       p5.ellipse(x+w/2,p5.map(i,7,0,y+r,y+h-r),r-2,r-2); 
       
     }
     p5.popStyle();

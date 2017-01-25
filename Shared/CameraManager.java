@@ -17,6 +17,7 @@ public class CameraManager {
   BackgroundSubtractorMOG backgroundSubtractor;
 
   Capture cam; 
+  boolean camStarted = false; 
   PApplet p5; 
   int motionLevel; 
   Rectangle[] faces;
@@ -48,15 +49,21 @@ public class CameraManager {
     openCVFaces.loadCascade(OpenCV.CASCADE_FRONTALFACE); 
 
     startBackgroundSubtraction(100, 5, 0.1);
-
-    cam = new Capture(p5, camWidth, camHeight, "Camera", 30);
-    cam.start();
-
+    try { 
+      cam = new Capture(p5, camWidth, camHeight, "Camera", 30);
+      cam.start();
+      camStarted = true; 
+    } catch (RuntimeException e) { 
+       p5.println(e);  
+      
+    }
     scaledCamImageMotion = p5.createImage(p5.round(camWidth*camMotionScale), p5.round(camHeight*camMotionScale), p5.GRAY);
     scaledCamImageFaces = p5.createImage(p5.round(camWidth*camFacesScale), p5.round(camHeight*camFacesScale), p5.GRAY);
   };
 
   public void update() { 
+    if(!camStarted) return; // TODO draw message onscreen
+    
     if (cam.available()) { 
       cam.read();
     }

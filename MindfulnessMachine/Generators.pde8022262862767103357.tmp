@@ -13,8 +13,8 @@ import java.awt.geom.AffineTransform;
 import java.util.List;
 import java.util.Collections;
 
-
-boolean TEST_SHAPES = true;  
+public class PatternGenerator {
+}
 
 //float genseed = 5; 
 int generationCount = 0; 
@@ -36,14 +36,15 @@ void makeShapes(int type, int seed, float happiness, float stim, float w, float 
   noiseSeed(seed);
   println ("makeShapes = ", type, seed, happiness, stim); 
 
-  if (TEST_SHAPES) 
-    shapes = getTestShapes(w, h, happiness, stim, seed);
-  else if (type ==0)
+  float rnd = random(1); 
+  //println(rnd);
+  if (type ==0)
     shapes = getLandscapeShapes(w, h, happiness, stim);
   else if (type == 1)
     shapes = getSpiralShapes(w, h, happiness, stim);     
   else if (type ==2)   
     shapes = getTruchetShapes(w, h, happiness, stim);
+  //shapes = getTestShapes(width, height);
 
 
   // remove the bits of shape that are outside of the rectangle
@@ -61,65 +62,14 @@ void makeShapes(int type, int seed, float happiness, float stim, float w, float 
     }
     a.intersect(boundingRect);
   }
-
-
-  ArrayList<Integer> usedPens = new ArrayList<Integer>(); 
-
-
-
-  int numPensUsed = round(map(stim, 0, 1, 1, 5)); 
-  int centrePen = constrain(round(map(happiness, 0, 1, 0, 6.4)+random(-1, 1)), 0, 6); 
-  int centreOffset =  round(random(-1.4, 1.4));
-  println("centrePen : "+centrePen+ " number of pens : " + numPensUsed); 
-  int count = 1;
-
-  usedPens.add(centrePen); 
-
-  while (usedPens.size()<numPensUsed) { 
-    int penNum; 
-    if (count%2==1) { 
-      penNum = centrePen+(ceil((float)count/2f));
-    } else { 
-      penNum = centrePen-(ceil((float)count/2f));
-    }   
-    if ((penNum>=0) && (penNum<=6) && (!usedPens.contains(penNum))) usedPens.add(penNum); 
-    count++;
-  }
-
-  if (usedPens.size()==1) { 
-    usedPens.add(centrePen); 
-    if (happiness<0.3) usedPens.add(7); 
-    else if (centrePen>=1) usedPens.add(centrePen-1);
-  }
-
-  // if we're not too stimulated then let's sort the colours
-  if (stim<0.8) { 
-    Collections.sort(usedPens);
-  }
-  printArray(usedPens); 
-
-
-
-
-  for (int i=0; i<shapes.size(); i++) { 
-    if (happiness<0.2) { 
-      // then distribution is random
-      shapes.get(i).setPenNumber(usedPens.get(floor(random(0, usedPens.size()))));
-    } else { 
-      // distribution is even
-      shapes.get(i).setPenNumber(usedPens.get(i%usedPens.size()));
-    }
-  }
-
-
   removeOverlapsUsingShapeData(shapes);
 
   Collections.reverse(shapes);
-
+  
   // not sure we should do this here... 
   plotter.clear();
   for (ShapeData s : shapes) {
-    outlineContour(s.getShape(), 7, false);
+    outlineContour(s.getShape(), 0, false);
   }
 }
 
@@ -132,7 +82,7 @@ void removeOverlapsUsingShapeData(List<ShapeData> shapeDatas) {
   removeOverlaps(shapes); 
   // pretty nasty - assumes both lists are same length (which they should be)
   for (int i = 0; i<shapes.size(); i++) { 
-    if (shapeDatas.size()<=i) { 
+    if (shapeDatas.size()>=i) { 
       println("ERROR - shapeDatas size doesn't match shapes size...") ;
     }
     shapeDatas.get(i).setShape(shapes.get(i));
@@ -140,7 +90,7 @@ void removeOverlapsUsingShapeData(List<ShapeData> shapeDatas) {
 }
 
 List<ShapeData> getSpiralShapes(float width, float height, float happiness, float stim) {
-  List<ShapeData> shapes = new ArrayList<ShapeData>(); 
+  List<ShapeData> shapes = new ArrayList<Shape>(); 
 
   println("getSpiralShapes " + stim + " " + happiness);
 
@@ -279,7 +229,7 @@ List<ShapeData> getSpiralShapes(float width, float height, float happiness, floa
 
 
 List<ShapeData> getLandscapeShapes(float width, float height, float happiness, float stim) {
-  List<ShapeData> shapes = new ArrayList<ShapeData>(); 
+  List<ShapeData> shapes = new ArrayList<Shape>(); 
 
   JSONObject json = new JSONObject(); 
 
@@ -325,7 +275,7 @@ List<ShapeData> getLandscapeShapes(float width, float height, float happiness, f
   json.setFloat("waveLength", wavelength); 
   json.setFloat("shift", shift); 
 
-  boolean linear = random(1)<0.5; 
+  boolean linear = false;//random(1)<0.5; 
 
   if (linear) { 
     // linear
@@ -513,21 +463,46 @@ List<ShapeData> getTruchetShapes(float width, float height, float happiness, flo
 
 
 
-List<ShapeData> getTestShapes(float w, float h, float happiness, float stim, int seed) {
+List<Shape> getTestShapes(float width, float height, float happiness, float stim) {
+  Path2D.Float s1 = new Path2D.Float();
+  List<Shape> shapes = new ArrayList<Shape>(); 
 
-  List<ShapeData> shapes = new ArrayList<ShapeData>(); 
-  
-  int cols = floor(w/330); 
-  int rows = floor(h/30); 
-  float x = (seed%cols)*330;
-  float y = floor((float)seed/(float)cols) * 30;
-  
-  
-  for(int i =0; i<16; i++) { 
-      
-    Shape s = new Rectangle2D.Double(x + (i*20), y, 20, 20);  
-    shapes.add(new ShapeData(s)); 
-  }
+  float x = 100;
+  float y = 100; 
+  float size = 100; 
+
+  Point2D.Float p1 = new Point2D.Float(x, y); 
+  Point2D.Float p2 = new Point2D.Float(x+size+0.1, y); 
+  Point2D.Float p3 = new Point2D.Float(x, y+size+0.1); 
+  Point2D.Float p4 = new Point2D.Float(x+size+0.1, y+size+0.1);
+
+  s1.moveTo(p1.x, p1.y);
+  s1.lineTo(p2.x, p2.y); 
+  s1.lineTo(p4.x, p4.y); 
+  s1.lineTo(p3.x, p3.y); 
+  s1.closePath();
+
+  Area a1 = new Area(s1); 
+  shapes.add(a1); 
+
+  x = 120;
+  y = 120; 
+  size =60; 
+
+  p1 = new Point2D.Float(x, y); 
+  p2 = new Point2D.Float(x+size+0.1, y); 
+  p3 = new Point2D.Float(x, y+size+0.1); 
+  p4 = new Point2D.Float(x+size+0.1, y+size+0.1);
+  s1 = new Path2D.Float();
+  s1.moveTo(p1.x, p1.y);
+  s1.lineTo(p2.x, p2.y); 
+  s1.lineTo(p4.x, p4.y); 
+  s1.lineTo(p3.x, p3.y); 
+  s1.closePath();
+
+  a1 = new Area(s1); 
+  shapes.add(a1); 
+
   return shapes;
 }
 
@@ -553,9 +528,7 @@ public class ShapeData {
   public Shape getShape() { 
     return shape;
   }
-  public void setPenNumber(int num) { 
-    penNumber = num;
-  }
+
   public int getPenNumber() { 
     return penNumber;
   }

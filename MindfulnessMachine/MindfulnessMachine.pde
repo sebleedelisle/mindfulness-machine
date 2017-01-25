@@ -14,20 +14,24 @@ Plotter plotter;
 MoodManager moodManager; 
 ColourChooser colourChooser; 
 
-List<Shape> shapes;
+List<ShapeData> shapes;
 
 float xzoom = 0;
 float yzoom =0;
 float zoom =1; 
 int shapenum = 0; 
 int currentColourShape = 0; 
+int issueNumber; // for keeping track of the number for prints
 
 color[] colours = new color[11]; 
 
 void setup() { 
 
-  fullScreen(); 
+  //fullScreen(); 
+  size(1920, 1080); 
   noSmooth();
+
+  issueNumber = 4; // TODO load from file!
 
   moodManager = new MoodManager(this); 
   plotter = new Plotter(this, width, height); 
@@ -43,20 +47,19 @@ void setup() {
   //  selectedpens[5] = 0;
   //  selectedpens[6] = 6;
 
-  //  for (int i = 0; i<7; i++) { 
-  //    plotter.setPenColour(i+1, colours[selectedpens[i]]);
-  //  }
-  //  plotter.setPenColour(0, #000000);  
+  for (int i = 0; i<7; i++) { 
+    plotter.setPenColour(i, colourChooser.getColourForPenNum(i) );
+  }
+  plotter.setPenColour(7, #000000);  
 
-  //  for (int i = 0; i<8; i++) { 
-  //    plotter.setPenThickness(i, 0.8);
-  //  }
+  for (int i = 0; i<8; i++) { 
+    plotter.setPenThicknessMM(i, 0.8);
+  }
 
   //startDrawing(); 
   //makeShapes();
 
   plotter.connectToSerial("usbserial");
-  
 }
 
 void draw() { 
@@ -78,8 +81,9 @@ void draw() {
     fill(255);
     textAlign(CENTER, CENTER); 
     text("CHANGE PAPER AND PRESS SPACE", width/2, height/2); 
-    break;
 
+    colourChooser.renderPens(20, 500, 60, 300); 
+    break;
 
   case STATE_DRAWING : 
 
@@ -88,20 +92,20 @@ void draw() {
       if (currentColourShape>=shapes.size()) {
         state = STATE_WAIT_PAPER; // TODO make function called plotFinished
       } else { 
-        fillContour(shapes.get(currentColourShape), currentColourShape%7+1, 1.5, false);   
+        fillContour(shapes.get(currentColourShape).getShape(), shapes.get(currentColourShape).getPenNumber(), 1.5, false);   
         currentColourShape++; 
         plotter.startPrinting();
       }
     }
     pushMatrix(); 
-    scale(zoom);
-    if (zoom==1) {
-      xzoom = 0; 
-      yzoom = 0;
-    }
-    xzoom += (constrain(map(mouseX, width*0.1, width*0.9, 0, - width * (zoom-1)/zoom), -width * (zoom-1)/zoom, 0)-xzoom)*0.1; 
-    yzoom += (constrain(map(mouseY, height*0.1, height*0.9, 0, - height * (zoom-1)/zoom), -height * (zoom-1)/zoom, 0)-yzoom)*0.1; 
-    translate(xzoom, yzoom); 
+    //scale(zoom);
+    //if (zoom==1) {
+    //  xzoom = 0; 
+    //  yzoom = 0;
+    //}
+    //xzoom += (constrain(map(mouseX, width*0.1, width*0.9, 0, - width * (zoom-1)/zoom), -width * (zoom-1)/zoom, 0)-xzoom)*0.1; 
+    //yzoom += (constrain(map(mouseY, height*0.1, height*0.9, 0, - height * (zoom-1)/zoom), -height * (zoom-1)/zoom, 0)-yzoom)*0.1; 
+    //translate(xzoom, yzoom); 
 
 
     background(0);
@@ -119,9 +123,29 @@ void draw() {
     //rect(0,0,width, height);
     //tint(255,220); 
     //blendMode(MULTIPLY);
+    translate(0,400); 
+    scale(0.6,0.6); 
     plotter.renderProgress();
     //popStyle(); 
     popMatrix(); 
+
+    pushMatrix(); 
+    translate(1920f*2f/3f, 400); 
+    scale(0.4, 0.4);
+
+    fill(250); 
+    rect(0, 0, plotter.screenWidth, plotter.screenHeight); 
+    for (int i = 0; i<shapes.size(); i++) { 
+      stroke(0); 
+      fill(plotter.getPenColour(shapes.get(i).getPenNumber())); 
+      drawPath(shapes.get(i).getShape());
+    }
+    //plotter.renderPreview();
+
+
+    popMatrix();
+
+    colourChooser.renderPens(20, 500, 20, 300); 
 
     fill(0); 
     rect(0, 0, width, 400); 
@@ -148,9 +172,9 @@ void keyPressed() {
     plotter.startPrinting();
   } else if (key == 'C') {
     shapenum = 0;
-    for (Shape shape : shapes) {
+    for (ShapeData shapedata : shapes) {
       int colourIndex = (shapenum%7)+1;
-      fillContour(shape, colourIndex, plotter.getPenThicknessPixels(colourIndex), false);
+      fillContour(shapedata.getShape(), shapedata.getPenNumber(), plotter.getPenThicknessPixels(colourIndex), false);
       shapenum++;
     }
   } else if (key == 'S') {
@@ -180,9 +204,13 @@ void nextState() {
 void startDrawing() { 
 
   state = STATE_DRAWING; 
-  makeShapes(); 
+
+  //makeShapes(int type, int seed, float happiness, float stim, float w, float h)
+  makeShapes(issueNumber%2, issueNumber, moodManager.getHappiness(), moodManager.getStimulation(), plotter.screenWidth, plotter.screenHeight); 
   plotter.startPrinting(); 
   currentColourShape = 0;
+  
+  issueNumber++; 
 }
 
 

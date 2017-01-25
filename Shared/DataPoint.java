@@ -78,6 +78,10 @@ public class DataPoint {
     updateRange();
   }
 
+  public float getValue() { 
+    return value; 
+    
+  }
 
   public void updateRange() { 
     if (value<min) {

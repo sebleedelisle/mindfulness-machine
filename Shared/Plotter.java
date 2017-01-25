@@ -46,6 +46,7 @@ public class Plotter {
   PVector lastPlotPosition; 
   float currentVelocity; 
 
+  boolean connectionToSerial;  // have we tried to connect to the serial? 
   boolean initialised; // have we got back all the init data from the plotter?  
   boolean printing; // are we currently sending the commands to the plotter? 
   boolean waiting;  // are we waiting for an OA command from the printer? (tells us it's ready for more)
@@ -105,8 +106,8 @@ public class Plotter {
     //float buffer = read( escapeChar+".B")
     if (commands.size()==0) {
       if (!finished) {  
-        // should probably put a delay in here... 
-        plotSelectPen(0); 
+        // TODO should probably put a delay in here... 
+        //plotSelectPen(0); 
         finished = true;
       }
     } else { 

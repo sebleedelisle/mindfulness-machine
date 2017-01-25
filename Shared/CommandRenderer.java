@@ -28,7 +28,7 @@ public class CommandRenderer {
 
   public void clear() { 
 
-    if (drawing) g.endDraw(); 
+    endDrawing(); 
 
     g.beginDraw(); 
     g.blendMode(g.BLEND);
@@ -75,9 +75,11 @@ public class CommandRenderer {
       g.pushMatrix(); 
       g.translate(0,g.height); 
       g.scale(plotterToPixelsScale, -plotterToPixelsScale); 
-      drawing = true;
+
       g.strokeJoin(g.ROUND);
       g.strokeCap(g.ROUND);
+      
+       drawing = true;
     }
   }
   public void endDrawing() { 

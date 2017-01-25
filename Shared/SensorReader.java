@@ -15,7 +15,7 @@ public class SensorReader {
 
   //public float temperature; 
   public float r, g, b;  
-  boolean connected; 
+  boolean connected = false; 
 
   DataPoint temperature, lux, colourTemperature; 
 
@@ -47,11 +47,18 @@ public class SensorReader {
   }
 
   public void connectToSerial() { 
+    // this code resets the Arduino Leonardo - hacky though!   
     //sensorSerialPort = new Serial(p5, portName, 1200);
     //sensorSerialPort.stop();
     //p5.delay(5000);
-    sensorSerialPort = new Serial(p5, portName, 9600);
     p5.println("Connecting to Serial - "+portName);
+    try { 
+      sensorSerialPort = new Serial(p5, portName, 9600);
+      connected = true; 
+    } catch (RuntimeException e) { 
+      p5.println(e); 
+    }
+   
   }
   public void close() { 
     sensorSerialPort.stop();
