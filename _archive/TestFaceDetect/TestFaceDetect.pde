@@ -33,7 +33,7 @@ void setup() {
       println(cameras[i]);
     }
 
-    cam = new Capture(this, 320,240,"HD Pro Webcam C920", 30);
+    cam = new Capture(this, 512,384,"Camera", 30);
     cam.start();   
 
 //    Capture cam2 = new Capture(this, 1920, 1080, "HD Pro Webcam C920", 30);

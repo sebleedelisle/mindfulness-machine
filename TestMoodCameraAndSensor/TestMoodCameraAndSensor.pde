@@ -5,12 +5,13 @@ import processing.serial.Serial;
 MoodManager moodManager; 
 
 void setup () { 
-  
-  fullScreen(P2D);
+  size(1920,1080,P2D); 
+  //fullScreen(P2D);
   textSize(12); 
   noSmooth();
 
   moodManager = new MoodManager(this); 
+ // moodManager.timeSpeed = 1000; 
 }
 
 void draw() { 

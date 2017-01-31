@@ -19,7 +19,7 @@ void initGui() {
     .setNumberOfTickMarks(101) 
     .showTickMarks(false)
     //.snapToTickMarks(true)
-    .setValue(seedValue);
+    .setValue(14);
 
   typeSlider = cp5.addSlider("s_type")
     .setPosition(1600, 80)
@@ -33,7 +33,7 @@ void initGui() {
     .setPosition(1600, 110)
     .setSize(250, 20)
     .setRange(0, 1)
-    .setNumberOfTickMarks(11) 
+    .setNumberOfTickMarks(101) 
     .showTickMarks(false)
     .setValue(0.5);
     
@@ -41,7 +41,7 @@ void initGui() {
     .setPosition(1600, 140)
     .setSize(250, 20)
     .setRange(0, 1)
-    .setNumberOfTickMarks(11) 
+    .setNumberOfTickMarks(101) 
     .showTickMarks(false)
     .setValue(0.5);
 }
@@ -49,11 +49,11 @@ void initGui() {
 
 
 public void controlEvent(ControlEvent theEvent) {
- // println("got a control event from controller with id "+theEvent.getId());
-  //println(theEvent);
+  //println("got a control event from controller with id "+theEvent.getId());
+  println(theEvent);
   switch(theEvent.getName()) {
     case("s_seed"): 
-    seedValue = (int)theEvent.getValue(); 
+    seedValue = issueNumber = (int)theEvent.getValue(); 
     break;
 
     case("s_type"):  

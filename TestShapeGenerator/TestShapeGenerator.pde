@@ -17,14 +17,17 @@ Plotter plotter;
 
 List<ShapeData> shapes;
 
+String currentDateString = "00:00:00"; 
+
 float xzoom = 0;
 float yzoom =0;
 float zoom =1; 
 int shapenum = 0; 
 
 float penThickness = 1.5; 
-
+int issueNumber; 
 color[] colours = new color[11]; 
+int drawingNumber; 
 
 void setup() { 
 
@@ -71,7 +74,7 @@ void setup() {
 }
 
 void draw() { 
-
+  drawingNumber = seedValue; 
   pushMatrix(); 
   scale(zoom);
   if (zoom==1) {
@@ -90,21 +93,32 @@ void draw() {
   strokeCap(ROUND);
 
   plotter.update();
-  //plotter.renderPreview();
 
-  
-  if (shapes!=null) { 
-    fill(250); 
-    rect(0,0,plotter.screenWidth, plotter.screenHeight); 
-    for (int i = 0; i<shapes.size(); i++) { 
-      stroke(0); 
-      fill(plotter.getPenColour(shapes.get(i).getPenNumber())); 
-      drawPath(shapes.get(i).getShape());
+
+  if (plotter.printing) plotter.renderPreview();
+  else { 
+
+    if (shapes!=null) { 
+      fill(250); 
+      rect(0, 0, plotter.screenWidth, plotter.screenHeight); 
+      for (int i = 0; i<shapes.size(); i++) { 
+        stroke(0); 
+        fill(plotter.getPenColour(shapes.get(i).getPenNumber())); 
+        drawPath(shapes.get(i).getShape());
+      }
     }
   }
-
   popMatrix();
+
+  for (int i = 0; i<8; i++) { 
+    stroke(255);
+    fill(plotter.getPenColour(i)); 
+    rect(50, 400+((7-i)*60), 50, 50);
+  }
+  fill(255);
+  text(moodManager.getMoodDescription(happy, stim), 1500, 500);
 }
+
 
 void mousePressed() {
 }
@@ -123,11 +137,14 @@ void keyPressed() {
     //plotter.initHPGL();
   } else if (key == 'P') {
     println("PRINT"); 
+    //for (ShapeData shape : shapes) {
+    //  outlineContour((Shape)shape.getShape(), 7,false);
+    //}
     plotter.startPrinting();
   } else if (key == 'C') {
     shapenum = 0;
     for (ShapeData shape : shapes) {
-      fillContour((Shape)shape.getShape(), shape.getPenNumber(), penThickness, false);
+      fillContour((Shape)shape.getShape(), shape.getPenNumber(), penThickness);
       shapenum++;
     }
   } else if (key == 'S') {
@@ -149,4 +166,21 @@ void keyPressed() {
 
 void serialEvent(Serial port) { 
   plotter.serialEvent(port);
+}
+MoodManager moodManager = new MoodManager();
+class MoodManager { 
+
+ String getMoodDescription(float happiness, float stimulation) { 
+    String[][] moods = { 
+      {"Miserable", "Melancholy", "Stressed", "Panicking"}, // sad
+      {"Lethargic", "Dissatisfied", "On edge", "Jittery" }, 
+      {"Satisfied", "Calm", "Focussed", "Confident"},     
+      {"Carefree", "Cheerful", "Engaged", "Ecstatic"}  // happy 
+ 
+    };
+
+    int happyIndex = mapConstrainFloor(happiness, 0, 1, 0, 3.99f); 
+    int stimIndex = mapConstrainFloor(stimulation, 0, 1, 0, 3.99f); 
+    return moods[happyIndex][stimIndex];
+  }
 }

@@ -1,0 +1,32 @@
+import processing.serial.*;
+
+Plotter plotter; 
+Serial serial;
+
+void setup() { 
+
+
+  size(1170, 800);
+  
+  plotter = new Plotter(this, width, height);
+  plotter.connectToSerial("usbserial"); 
+  
+  for(float x = 0; x<1000; x+=20) { 
+   plotter.moveTo(x, 0); 
+   plotter.lineTo(x,800); 
+   
+   plotter.plotCircle(random(width), random(height), random(10,40));
+    
+  }
+  //float x = 200;
+  //plotter.moveTo(x, 0); 
+  // plotter.lineTo(x,800);
+  
+  plotter.printing = true;
+}
+
+void draw() { 
+  plotter.update();
+  plotter.renderPreview();
+  
+}
