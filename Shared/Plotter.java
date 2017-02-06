@@ -11,6 +11,9 @@ import processing.serial.*;
 
 public class Plotter { 
 
+  final char escapeChar = (char)27;
+  final char termChar = (char)'\r';
+
   final static int COMMAND_MOVETO = 0; 
   final static int COMMAND_LINETO = 1; 
   final static int COMMAND_CIRCLE = 2;
@@ -20,14 +23,15 @@ public class Plotter {
   final static int COMMAND_PEN_CHANGE = 6; 
 
   ArrayList<Command> commands; 
+  ArrayList<Command> commandsProcessed; 
 
   PApplet p5; 
   Serial serial;
+
   boolean debug; // outputs serial data to console
+
   boolean dry = false; // doesn't send drawing commands to the plotter
   String plotterID; 
-  char escapeChar = (char)27;
-  char termChar = (char)'\r';
 
   int plotWidth, plotHeight;
   float aspectRatio, scalePixelsToPlotter; 
@@ -39,6 +43,8 @@ public class Plotter {
 
   CommandRenderer previewImage; 
   CommandRenderer progressImage; 
+  
+  int previewWidth = 940; 
 
   PenManager penManager;  
   int currentPen; 
@@ -46,12 +52,17 @@ public class Plotter {
   PVector lastPlotPosition; 
   float currentVelocity; 
 
-  boolean connectionToSerial;  // have we tried to connect to the serial? 
+
   boolean initialised; // have we got back all the init data from the plotter?  
+
   boolean printing; // are we currently sending the commands to the plotter? 
-  boolean waiting;  // are we waiting for an OA command from the printer? (tells us it's ready for more)
-  int lastRequestSent; 
+
   boolean finished;  // have we finished sending all the commands to the printer? 
+
+  boolean waiting;  // are we waiting for an OA command from the printer? (tells us it's ready for more)
+  int lastRequestSent; // the time we sent the last request
+
+  // used to moderate the rate of sending commands
   int printingStartedTime; 
   int commandsSentSincePrintingStarted; 
 
@@ -76,10 +87,13 @@ public class Plotter {
     printing = false;  // if true, we're sending commands to the plotter
     waiting = false; 
     initialised = false;  // true once we're sure we have a handshake with the plotter
+
+
     lastPlotPosition = new PVector(0, 0); // used to store where the plotter is so we can measure how far it's drawn
     currentPen = 0;
     isPenDown = false; 
     commands = new ArrayList<Command>();
+    commandsProcessed = new ArrayList<Command>();
     commandsPerSecond = 20; 
     commandsSentSincePrintingStarted = 0; 
 
@@ -91,34 +105,30 @@ public class Plotter {
     plotHeight = 11040; 
     plotterUnitsPerMM = 40; 
 
-    penManager = new PenManager(p5);
 
-    previewImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, 1); 
-    progressImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, 1);
+    penManager = new PenManager(p5);
+    updatePlotterScale();
   }
 
 
   public boolean update() {
 
-
+    commandsProcessed.clear(); 
+    // if ((!initialised)&&(!dry)) return false; 
     if (!initialised) return false; 
+
     if (p5.frameCount%60==0) penManager.saveStatus(); 
-    // TODO check buffer!
-    //float buffer = read( escapeChar+".B")
     if (commands.size()==0) {
       if (!finished) {  
-        // TODO should probably put a delay in here... 
-        //plotSelectPen(0); 
         finished = true;
       }
     } else { 
       finished = false;
     }
-    //p5.println(p5.frameCount + "Buffer remaining : "+read( escapeChar+".B"));
-    //p5.println("Buffer remaining : "+read( escapeChar+".L"));
-    //checkSerial();
+
+    // if we haven't heard back from the plotter for a while, give it a nudge
     if ((waiting) && (p5.millis()-lastRequestSent>10000)) { 
-      //waitStartTime = p5.millis(); 
+      p5.println("resetting plotter"); 
       requestsSent.clear(); 
       read("OA");
     }
@@ -128,7 +138,7 @@ public class Plotter {
       float totalPrintTime = (float) (p5.millis()-printingStartedTime)/1000f; 
 
       float commandrate = commandsPerSecond; 
-      if (dry) commandrate = 10000; 
+      if (dry) commandrate = 10000;//10000; 
       while ((commands.size()>0) &&(float)commandsSentSincePrintingStarted/(float)totalPrintTime<commandrate) {
         processCommand(1);
       }
@@ -200,18 +210,16 @@ public class Plotter {
     while (port.available()>0) {
 
       int inByte = port.read();
-      //p5.println((char)inByte+ " : " + inByte);
+      p5.println((char)inByte+ " : " + inByte);
       //if ((inByte!=0)&&(inByte!=(int)('\r'))) {
 
       if (inByte == 13) { 
         receivedString = receivedBuffer; 
         receivedBuffer = "";
-        
-        
-        
+
         if (requestsSent.size()>0) { 
-          p5.println(requestsSent.get(0)+ " : "+ receivedString);
-          
+          p5.println(requestsSent.get(0)+ " : "+ receivedString);    
+
           String request = requestsSent.get(0); 
           if (request.indexOf("OA")==0) { 
             waiting = false;
@@ -246,7 +254,6 @@ public class Plotter {
           requestsSent.remove(0);
         } else { 
           p5.println("received (no requests) : "+ receivedString);
-          
         }
       } else { 
         receivedBuffer = receivedBuffer + (char)inByte;
@@ -410,6 +417,8 @@ public class Plotter {
       Command c = (Command)commands.get(0);
       commands.remove(0); 
 
+      commandsProcessed.add(c); 
+
       progressImage.renderCommand(c); 
 
       if (c.c == COMMAND_MOVETO) { 
@@ -531,10 +540,12 @@ public class Plotter {
     p5.println("screenHeight", screenHeight);
     p5.println("aspect ratio", aspectRatio);
 
-    previewImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, scalePixelsToPlotter);
-    progressImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, scalePixelsToPlotter);
+    //previewImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, scalePixelsToPlotter);
+    //progressImage = new CommandRenderer(p5, penManager, screenWidth, screenHeight, scalePixelsToPlotter);
     //previewImage.smooth(); 
     //previewDirty = true;
+    previewImage = new CommandRenderer(p5, penManager, previewWidth, (int)((float)previewWidth/aspectRatio), scalePixelsToPlotter*screenWidth/previewWidth, 8); 
+    progressImage = new CommandRenderer(p5, penManager, previewWidth, (int)((float)previewWidth/aspectRatio), scalePixelsToPlotter*screenWidth/previewWidth, 8);
   }
 
   PVector screenToPlotter(PVector screenPos) { 
@@ -558,14 +569,6 @@ public class Plotter {
 
 
 
-  ///**
-  // * Move the pen position to the given relative coordinates
-  // * @param x the x coordinate
-  // * @param y the y coordinate
-  // */
-  //public void plotRelative(int x, int y) {
-  //  send("PR", new Integer(x), new Integer(y));
-  //}  
 
   //// SERIAL FUNCTIONS... 
 
@@ -613,7 +616,7 @@ public class Plotter {
     if (debug)
       PApplet.println("raw command: " + command);
 
-    //if (!this.dry)
+    // if (!this.dry)
     this.serial.write(command);
 
     String result = "";

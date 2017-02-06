@@ -7,8 +7,9 @@ import java.awt.Rectangle;
 import org.opencv.core.Mat;
 
 
-public class CameraManager { 
 
+public class CameraManager { 
+String cameraName = "Camera";//"FaceTime HD Camera (Built-in)";// ******* CHANGE TO "Camera"!!!!!!!!
   PImage motionImage; 
   PImage scaledCamImageMotion; 
   PImage scaledCamImageFaces; 
@@ -61,7 +62,7 @@ public class CameraManager {
     camStarted = false; 
      p5.println("connecting to camera..."); 
      try { 
-      cam = new Capture(p5, camWidth, camHeight, "Camera", 30);
+      cam = new Capture(p5, camWidth, camHeight, cameraName, 30);
       cam.start();
       camStarted = true;
       
@@ -83,7 +84,8 @@ public class CameraManager {
       }
       cameraReconnectTime = p5.millis();
       cameraReconnectTries++; 
-      cameraReconnectTime+=p5.constrain(p5.map(cameraReconnectTries, 1,5,5000,30000),5000,30000); 
+       int nextTime = (int)p5.constrain(p5.pow(2, cameraReconnectTries)*1000, 5000, 300000); 
+      cameraReconnectTime+=nextTime;
 
     } else {
       p5.println("...success!", camStarted); 
@@ -203,7 +205,7 @@ public class CameraManager {
       p5.rect(0, 0, camWidth*scale, camHeight*scale);
       p5.fill(0,255,0);
       p5.textAlign(p5.CENTER, p5.CENTER); 
-      p5.textSize(20);
+      //p5.textSize(20);
       p5.text("CAMERA CONNECTION ERROR", camWidth/2*scale, camHeight/2*scale-15); 
        p5.fill(0,100,0);
       p5.text("RETRYING IN " +p5.round((cameraReconnectTime-p5.millis())/1000f), camWidth/2*scale, camHeight/2*scale + 15); 

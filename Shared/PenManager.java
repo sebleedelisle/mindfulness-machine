@@ -13,7 +13,6 @@ public class PenManager {
     p5 = processing; 
     pens = new ArrayList<Pen>(); 
     for (int i = 0; i<8; i++) { 
-
       pens.add(new Pen(p5));
     }
     loadStatus(); 

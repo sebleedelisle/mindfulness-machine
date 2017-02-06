@@ -93,6 +93,33 @@ public class DataPoint {
     p5.popStyle(); 
     p5.popMatrix();
   }
+  
+  public void drawHistoryGraph(PApplet p5, float x, float y, float w, float h, int colour) { 
+      p5.pushMatrix();
+
+    p5.translate(x, y);
+
+    float ypos = PApplet.map(targetValue, min, max, h, 0);
+    p5.fill(colour);
+    p5.textAlign(PApplet.LEFT, PApplet.CENTER);
+    p5.text(label.toUpperCase().substring(0,4), w,ypos); 
+        
+    p5.noFill(); 
+    p5.stroke(colour);
+    p5.ellipse(w-10, ypos, 10, 10);
+    
+
+    p5.beginShape(); 
+    for (int i = valueHistory.size()-1; (i>=0) && (i>=valueHistory.size()-w+10); i--) { 
+      ypos = PApplet.map(valueHistory.get(i), min, max, h, 0); 
+      float xpos = w-valueHistory.size()+i-10; 
+      p5.vertex(xpos, ypos);
+    }
+    p5.endShape();
+
+    p5.popMatrix(); 
+    
+  }
 
   public void draw(PApplet p5, float x, float y, float w, float h) { 
 

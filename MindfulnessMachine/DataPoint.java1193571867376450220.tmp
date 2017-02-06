@@ -102,13 +102,12 @@ public class DataPoint {
     float ypos = PApplet.map(targetValue, min, max, h, 0);
     p5.fill(colour);
     p5.textAlign(PApplet.LEFT, PApplet.CENTER);
-    p5.text(label.toUpperCase().substring(0,4), w,ypos); 
-        
+    
     p5.noFill(); 
     p5.stroke(colour);
     p5.ellipse(w-10, ypos, 10, 10);
     
-
+    p5.text(label, w,ypos); 
     p5.beginShape(); 
     for (int i = valueHistory.size()-1; (i>=0) && (i>=valueHistory.size()-w+10); i--) { 
       ypos = PApplet.map(valueHistory.get(i), min, max, h, 0); 

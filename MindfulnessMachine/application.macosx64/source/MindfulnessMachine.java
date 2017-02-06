@@ -8,6 +8,7 @@ import processing.video.*;
 import gab.opencv.*; 
 import java.io.BufferedWriter; 
 import java.io.FileWriter; 
+import toxi.math.noise.*; 
 import java.awt.geom.Area; 
 import java.awt.Shape; 
 import java.awt.Polygon; 
@@ -19,6 +20,7 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.FlatteningPathIterator; 
 import java.awt.geom.AffineTransform; 
 import java.util.List; 
+import processing.core.*; 
 import java.awt.geom.Area; 
 import java.awt.Shape; 
 import java.awt.geom.Path2D; 
@@ -51,6 +53,8 @@ import java.io.OutputStream;
 import java.io.IOException; 
 
 public class MindfulnessMachine extends PApplet {
+
+
 
 
 
@@ -101,9 +105,12 @@ String currentDateString ="";
 PFont consoleFont; 
 PFont bodyFont; 
 PFont titleFont; 
+PFont logoFont; 
 
-PVector previewPos = new PVector(0,0);
-PVector previewTargetPos = new PVector(0,0); 
+PVector previewPos = new PVector(0, 0);
+PVector previewTargetPos = new PVector(0, 0); 
+
+CommandRendererData greenDataRenderer; 
 
 
 public void setup() { 
@@ -115,7 +122,9 @@ public void setup() {
   loadState(); 
   consoleFont = loadFont("fonts/BitstreamVeraSansMono-Bold-12.vlw");
   bodyFont = loadFont("fonts/BitstreamVeraSansMono-Bold-16.vlw");
-  titleFont = loadFont("fonts/AvenirNextCondensed-DemiBoldItalic-48.vlw");
+  titleFont = loadFont("fonts/AvenirNextCondensed-DemiBoldItalic-32.vlw");
+  logoFont = loadFont("fonts/AvenirNextCondensed-DemiBoldItalic-48.vlw");
+  
 
   setConsoleFont();
 
@@ -139,12 +148,14 @@ public void setup() {
   }
 
   plotter.connectToSerial("usbserial");
+  
+  
 }
 
 
 public void setTitleFont() { 
   textFont(titleFont); 
-  textSize(48);
+  textSize(32);
 } 
 public void setBodyFont() { 
   textFont(bodyFont); 
@@ -191,6 +202,10 @@ public void draw() {
   moodManager.update();
   currentDateString = moodManager.getCurrentDateString();
   plotter.update();
+  
+  if((greenDataRenderer==null) && (plotter.initialised)) { 
+    greenDataRenderer = new CommandRendererData(this, plotter.penManager, plotter.plotWidth, plotter.plotHeight, plotter.scalePixelsToPlotter);
+  }
 
   switch(state) { 
   case STATE_CAMERA_SETUP : 
@@ -323,13 +338,13 @@ public void draw() {
     fill(225);//,230,234); 
 
     String label = "STEP 1 : TURN OFF 'PAPER HOLD' ON THE PLOTTER (RED LIGHT SHOULD GO OUT),\n\n" +
-                   "STEP 2 : REMOVE THE CURRENT DRAWING AND POST ON WALL.\n\n" +
-                   "STEP 3 : PLACE BLANK SHEET ON THE PLOTTER BED, LINE UP WITH THE PLACEMENT MARKINGS\n" + 
-                   "AND THEN TURN ON THE PAPER HOLD BUTTON (RED LIGHT COMES ON).\n\n"+
-                   "PRESS SPACE TO CONTINUE";
-                    
+      "STEP 2 : REMOVE THE CURRENT DRAWING AND POST ON WALL.\n\n" +
+      "STEP 3 : PLACE BLANK SHEET ON THE PLOTTER BED, LINE UP WITH THE PLACEMENT MARKINGS\n" + 
+      "AND THEN TURN ON THE PAPER HOLD BUTTON (RED LIGHT COMES ON).\n\n"+
+      "PRESS SPACE TO CONTINUE";
+
     text(label, width*0.75f, height/2+120); 
-    
+
     break;
 
 
@@ -360,13 +375,11 @@ public void draw() {
         textAlign(CENTER, CENTER);
         setTitleFont(); 
         fill(map(sin(millis()*0.01f), -1, 1, 128, 255)); 
-
-        text("THINKING... PLEASE WAIT", width*0.75f, height/2+100);
+        text("THINKING... PLEASE WAIT", width- ((width-996)/2), height/2+100);
       }
-      renderProgressBottomLeft(); 
+      renderProgressBottomLeft();
     } else if (finishedDrawing) { 
 
-      //changeState(STATE_WAIT_PAPER); // TODO make function called plotFinished
       //println("PRINT FINISHED AT ", moodManager.getCurrentDateString());
       fill(map(sin(millis()*0.01f), -1, 1, 128, 255)); 
       textAlign(CENTER, CENTER); 
@@ -376,37 +389,39 @@ public void draw() {
       fill(225);//,230,234); 
 
       text("CHANGE PAPER AND PRESS SPACE TO CONTINUE", width*0.75f, (height/2)+150);
-      renderProgressBottomLeft(); 
+      renderProgressBottomLeft();
     } else { 
-          renderProgressBottom(); 
-
+      renderProgressBottom();
     }
 
 
 
-  
-
-    //pushMatrix(); 
-    //translate(1920f*2f/3f, 400); 
-    //scale(0.4, 0.4);
-
-    //fill(250); 
-    //rect(0, 0, plotter.screenWidth, plotter.screenHeight); 
-    //for (int i = 0; i<shapes.size(); i++) { 
-    //  stroke(0); 
-    //  fill(plotter.getPenColour(shapes.get(i).getPenNumber())); 
-    //  drawPath(shapes.get(i).getShape());
-    //}
-
-    //popMatrix();
-
-
 
     renderTopSectionData(); 
+    
+    if(greenDataRenderer!=null) { 
+      greenDataRenderer.renderCommands(plotter.commandsProcessed); 
+      pushMatrix(); 
+      pushStyle(); 
+      translate(940,420); 
+      greenDataRenderer.render(); 
+      popStyle();
+      popMatrix(); 
+    }
+    
+    
 
     break;
   }
 
+  fill(0); 
+  //stroke(255);
+  rect(1448, 1028, 1920-1448, 52);
+  textFont(logoFont); 
+  textSize(48);
+  fill(150); 
+  textAlign(RIGHT, BOTTOM); 
+  text("MINDFULNESS MACHINE", 1910, 1084); 
 
   if (TEST_MODE) { 
     fill(0); 
@@ -416,35 +431,35 @@ public void draw() {
     textSize(12); 
     text("TEST_MODE", 3, 3);
   }
-  fill(255); 
-  textSize(14);
-  text(getShapesRemaining(), 10, 100);
+  //fill(255); 
+  //textSize(14);
+  //text(getShapesRemaining(), 10, 100);
 }
 
 public void renderProgressBottom() {  
   renderProgressBottomLeft(); 
-  
+
   ////previewPos;
-  
+
   //pushMatrix(); 
   //translate(16, 400); 
   ////scale(0.6, 0.6); 
 
   //float imageheight = 680; 
-  
-  
+
+
   ////plotter.renderProgress();
   //CommandRenderer cr = plotter.progressImage; 
   //PVector penPos = cr.penPos; 
-  
+
   //float top = previewPos.y; 
   //float bottom = previewPos.y+imageheight; 
   //if(penPos.y<top) previewPos.y = cr.penPos.y; 
   //else if(penPos.y>bottom) previewPos.y = cr.penPos.y-imageheight; 
-  
+
 
   ////translate(0,-previewPos.y); 
-  
+
   //PGraphics g = cr.g; 
 
   //cr.endDrawing();
@@ -454,42 +469,62 @@ public void renderProgressBottom() {
   //noFill(); 
   //rectMode(CORNER);
   //rect(0,previewPos.y, 1920,imageheight);
-  
-    
-  //popMatrix(); 
-  
- 
+
+
+  //popMatrix();
 }
 
 public void renderProgressBottomLeft() {  
   pushMatrix(); 
-  translate(16, 400); 
-  scale(0.6f, 0.6f); 
+  translate(0, 416); 
+  //scale(0.6, 0.6); 
 
   plotter.renderProgress();
+  if(!plotter.initialised) { 
+    textAlign(LEFT,TOP);
+    setConsoleFont(); 
+    fill(0); 
+    text("PLOTTER NOT INITIALISED", 10,10);
+  }
   popMatrix();
 }
 
 public void renderTopSectionData() {
+
   fill(0); 
   rect(0, 0, width, 384+32); 
+  pushMatrix(); 
+  //translate(0,0); 
   setConsoleFont(); 
   moodManager.draw(consoleFont, bodyFont);
+  
+  setConsoleFont(); 
+  textAlign(CENTER, TOP); 
+  fill(0,255,255);
+  text("PEN DISTANCE\nTRAVELLED", 1810,30); 
+  renderPenUsage(1760,70);
+  popMatrix();
+}
 
+public void renderPenUsage(float xpos, float ypos) { 
   pushMatrix(); 
   pushStyle(); 
-  translate(1400, 50);
+  translate(xpos, ypos);
   textAlign(LEFT, CENTER); 
-  textSize(10); 
-  colourChooser.renderPens(0, 0, 40, 300);
+  setConsoleFont();
+  fill(0,255,255);
+  float w = 30, h = 300; 
+  colourChooser.renderPensSquare(0, 0,w, h, color(0,128,128));
+  float spacing = w; 
+  if((h/8)>spacing) spacing = h/8; 
+  
   for (int i = 0; i<8; i++) { 
-    float y = map(i, 7, 0, 20, 280); 
-    text(nf(plotter.getPenDistance(i)*0.001f, 0, 2), 50, y);
+    float y = map(i, 7, 0, w/2, h-(w/2)); 
+    text(nfc(round(plotter.getPenDistance(i)))+"mm", w+6, y);
   }
   popStyle();
   popMatrix();
 }
-
 
 public boolean colourNextShape() { 
 
@@ -562,6 +597,7 @@ public int getShapesRemaining() {
 Boolean controlPressed = false; 
 
 public void keyPressed() { 
+  System.gc();
   key = (""+key).toUpperCase().charAt(0);
   println(key);
   if (key == ' ') {
@@ -578,8 +614,14 @@ public void keyPressed() {
       plotter.clear(); 
       changeState(STATE_WAIT_PAPER);
     }
-  } else if (key == 'T') {
+  } else if (key == 'J') {
     moodManager.skipTimeHours(4);
+  } else if (key == 'T') {
+    moodManager.timeSpeed*=2; 
+    if(moodManager.timeSpeed>100000) {
+      
+      moodManager.resetTimeSpeed(); 
+    }
   } else if (key == '=') {
   } else if (key =='W') {
   } else if (keyCode == RIGHT) {
@@ -622,9 +664,8 @@ public void nextState() {
     changeState(STATE_PEN_TEST);
   } else if (state == STATE_PEN_TEST) {
     changeState(STATE_PRE_DRAWING);
-  } else if((state == STATE_DRAWING) && finishedDrawing) { 
+  } else if ((state == STATE_DRAWING) && finishedDrawing) { 
     changeState(STATE_WAIT_PAPER);
-    
   }
 }
 
@@ -637,6 +678,7 @@ public boolean changeState(int newstate) {
   if (state == STATE_DRAWING) {
     startDrawing();
   } else if (state == STATE_PRE_DRAWING) {
+    if(greenDataRenderer!=null) greenDataRenderer.clear();
     plotter.clear();
   } else if (state == STATE_WAIT_PENS) { 
     changePens();
@@ -707,7 +749,7 @@ public void startDrawing() {
 
 
   for (ShapeData s : shapes) {
-    outlineContour(s.getShape(), 7);
+    outlineContour(s.getShape(), 7); 
   }
 
 
@@ -1075,6 +1117,231 @@ public Point2D subPoints(Point2D p1, Point2D p2) {
 }
 public Point2D scalePoint(Point2D p, double scalar) { 
   return new Point2D.Float((float)(p.getX()*scalar), (float)(p.getY()*scalar));
+}
+ 
+
+
+public class CommandRendererData { 
+
+  PGraphics g; 
+  PApplet p5; 
+  float plotterToPixelsScale; 
+
+  PVector penPos; 
+  PenManager penManager; 
+
+  int currentPen; 
+  final int maxCommands = 1000; 
+
+  PVector offsetPos; 
+
+
+  ArrayList<Command> commands; 
+
+  int viewWidth, viewHeight; 
+  float plotWidth, plotHeight; 
+
+
+  PVector start, end, v, pos, screenPenPos, target, diff;
+
+
+  public CommandRendererData(PApplet processing, PenManager penmanager, int w, int h, float pixelToPlotterScale) {
+    commands = new ArrayList<Command>(); 
+    p5 = processing;
+    penManager = penmanager; 
+
+    start = new PVector(); 
+    end = new PVector(); 
+    v = new PVector(); 
+    pos = new PVector(); 
+
+    screenPenPos = new PVector(); 
+    target = new PVector(); 
+    diff = new PVector();
+
+
+    plotterToPixelsScale = 1/pixelToPlotterScale * 3; 
+    penPos = new PVector(0, 0); 
+    offsetPos = new PVector(0, 0); 
+
+    viewWidth = 1920-940;  
+    viewHeight = 660; 
+
+
+    plotWidth = w; 
+    plotHeight = h; 
+
+    g = p5.createGraphics(viewWidth, viewHeight); 
+
+    clear();
+  }
+
+  public void clear() { 
+    // clear stored commands
+    commands.clear();
+  }
+
+  public void renderCommands(ArrayList<Command> commands) { 
+
+    for (Command c : commands) renderCommand(c);
+  }
+  public void renderCommand(Command c) { 
+    commands.add(c); 
+    while (commands.size()>maxCommands) commands.remove(0);
+  }
+
+  public void renderCommandActual(Command c, int num) { 
+
+
+    int size = commands.size(); 
+
+    float weight = p5.constrain(p5.map(num, size-100, size, 1, 3), 1, 3) / plotterToPixelsScale;
+    int brightness =255; 
+    if (size>maxCommands-100) {
+      int toprange = size-maxCommands+100; 
+      brightness = (int)constrain(map(num, toprange-100, toprange, 0, 255), 0, 255);
+    }
+    g.stroke(0, brightness, 0); 
+    g.strokeWeight(weight);
+
+    if (c.c == Plotter.COMMAND_MOVETO) { 
+      g.strokeWeight(1); 
+      brightness = (int)constrain(map(num, commands.size()-100, commands.size(), 0, 255), 0, 255);
+      g.stroke(0, brightness, 0); 
+      if (num>2) drawDottedLine(penPos.x, penPos.y, c.p1, c.p2); 
+      penPos.set(c.p1, c.p2);
+    }  
+    if (c.c == Plotter.COMMAND_LINETO) { 
+      if (num>2) g.line(penPos.x, penPos.y, c.p1, c.p2); 
+      penPos.set(c.p1, c.p2);
+    } else if (c.c == Plotter.COMMAND_CIRCLE) { 
+
+      g.ellipseMode(p5.RADIUS); 
+      //float r = (float)c.p3/scalePixelsToPlotter; 
+      g.ellipse(c.p1, c.p2, c.p3, c.p3); 
+      //drawing = false;
+    } else if (c.c == Plotter.COMMAND_PEN_CHANGE) { 
+      if (c.p1>=0) {
+      }
+    }
+  }
+
+
+  public void drawDottedLine(float x1, float y1, float x2, float y2) { 
+
+    float space = 5/plotterToPixelsScale;
+
+    start.set(x1, y1); 
+    end.set(x2, y2); 
+    v.set(end); 
+    v.sub(start); 
+    float d = v.mag(); 
+    g.beginShape(p5.POINTS); 
+    for (float p=0; p<d; p+=space) { 
+      pos.set(v); 
+      pos.mult(p/d); 
+      pos.add(start); 
+      vertex(pos.x, pos.y);
+    }
+    g.endShape();
+  }
+
+  //  public void startDrawing() { 
+
+  //  }
+  //  public void endDrawing() { 
+  //    //if (drawing) { 
+  //    //  g.popMatrix();
+  //    //  g.endDraw();
+  //    //  drawing = false;
+  //    //}
+  //  }
+  // add screenVertex command!
+  public void screenVertex(int x, int y) { 
+    g.vertex(x*plotterToPixelsScale, y*plotterToPixelsScale);
+  }
+
+  public void render() { 
+
+    g.beginDraw();
+    g.background(0);
+    g.blendMode(p5.ADD); 
+
+    // this whole system is in screen space!
+
+    screenPenPos.x = penPos.x*plotterToPixelsScale; 
+    screenPenPos.y= g.height-(penPos.y*plotterToPixelsScale); 
+
+    target.set(offsetPos); 
+
+    float padding = 150; 
+    float top = offsetPos.y+padding; 
+    float bottom = offsetPos.y+viewHeight-padding; 
+    float left = offsetPos.x+padding; 
+    float right = offsetPos.x+viewWidth-padding; 
+
+    if (screenPenPos.x<left) target.x-=(left-screenPenPos.x); 
+    else if (screenPenPos.x>right) target.x+=(screenPenPos.x-right); 
+    if (screenPenPos.y<top) target.y-=(top-screenPenPos.y); 
+    else if (screenPenPos.y>bottom) target.y+=(screenPenPos.y-bottom); 
+
+    if (target.x<0) target.x = 0; 
+    else if (target.x+viewWidth>(plotWidth*plotterToPixelsScale)) target.x = (plotWidth*plotterToPixelsScale)-viewWidth; 
+    if (target.y-viewHeight<-(plotHeight*plotterToPixelsScale)) target.y = -(plotHeight*plotterToPixelsScale)+viewHeight; //target.y = 0; 
+    else if (target.y>60) target.y = 60; 
+
+    //p5.ellipse(screenPenPos.x, screenPenPos.y, 100,100); 
+    diff.set(target); 
+    diff.sub(offsetPos); 
+    //if (diff.mag()<800) { 
+    diff.mult(0.08f);
+    //} else { 
+    //  diff.mult(0.3);
+    //}
+    offsetPos.add(diff); 
+
+
+    // render last few commands
+    g.pushMatrix(); 
+    g.pushStyle(); 
+    g.translate(-offsetPos.x, -offsetPos.y);
+    g.translate(0, g.height); 
+
+    g.scale(plotterToPixelsScale, -plotterToPixelsScale); 
+
+
+    g.stroke(0, 80, 0); 
+    g.strokeWeight(1);
+    g.beginShape(p5.LINES); 
+    for (float x = 0; x<plotWidth-1; x+=(plotWidth-1)/26) { 
+      g.vertex(x, 0); 
+      g.vertex(x, plotHeight);
+    }
+    for (float y = 0; y<plotHeight-1; y+=(plotHeight-1)/20) { 
+      g.vertex(0, y); 
+      g.vertex(plotWidth, y);
+    }
+    g.endShape(); 
+
+
+    g.stroke(0, 255, 0); 
+
+    //g.blendMode(p5.ADD);
+    for (int i =0; i<commands.size(); i++) {
+      Command c = commands.get(i);
+      renderCommandActual(c, i);
+    }
+
+    g.strokeJoin(g.ROUND);
+    g.strokeCap(g.ROUND);
+    g.popStyle();
+    g.popMatrix();
+    g.endDraw(); 
+    p5.pushStyle() ;
+    p5.blendMode(p5.ADD); 
+    p5.image(g, 0, 0);
+    p5.popStyle();
+  }
 }
 
 

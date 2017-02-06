@@ -11,13 +11,19 @@ public class CommandRenderer {
   PenManager penManager; 
   int paperColour; 
   int currentPen; 
+  int padding; 
+  int w, h; 
 
-  public CommandRenderer(PApplet processing, PenManager penmanager, int w, int h, float pixelToPlotterScale) {
+  public CommandRenderer(PApplet processing, PenManager penmanager, int w, int h, float pixelToPlotterScale, int padding) {
     p5 = processing;
     penManager = penmanager; 
-    g = p5.createGraphics(w*2, h*2);
+    this.padding = padding; 
+    this.w = w; 
+    this.h = h; 
+    
+    g = p5.createGraphics(w+(padding*2), h+(padding*2));
 
-    plotterToPixelsScale = 1/pixelToPlotterScale * 2; 
+    plotterToPixelsScale = 1/pixelToPlotterScale; 
     penPos = new PVector(0, 0); 
     g.smooth();
     
@@ -73,7 +79,8 @@ public class CommandRenderer {
     if (!drawing) { 
       g.beginDraw();
       g.pushMatrix(); 
-      g.translate(0,g.height); 
+      g.translate(padding, padding);
+      g.translate(0,h); 
       g.scale(plotterToPixelsScale, -plotterToPixelsScale); 
 
       g.strokeJoin(g.ROUND);
@@ -97,7 +104,7 @@ public class CommandRenderer {
   public void render() { 
     endDrawing();
     p5.pushMatrix(); 
-    p5.scale(0.5f,0.5f); 
+    //p5.scale(0.5f,0.5f); 
     p5.image(g, 0, 0);
     p5.popMatrix(); 
   }

@@ -90,7 +90,7 @@ public class ColourChooser {
       }
 
       for (int i = 0; i<7; i++) { 
-        int colourindex = (iteration+((i+9)*3))%11;    
+        int colourindex = (iteration+((i+4)*3))%11;    
 
         //if we've run out of this colour... 
         if (pensRemainingByColour[colourindex]<=1) { 
@@ -191,6 +191,24 @@ public class ColourChooser {
         }
         p5.text(label, x+w+10, ypos);
       }
+    }
+    p5.popStyle();
+  }
+   public void renderPensSquare(float x, float y, float w, float h, int strokeColour) { 
+     
+    p5.pushStyle();
+    p5.rectMode(p5.CENTER); 
+    float r = p5.min(w, (h-14)/8)/2; 
+
+    p5.strokeWeight(1); 
+
+    for (int i = 0; i<8; i++) { 
+      float ypos = p5.map(i, 7, 0, y+r, y+h-r); 
+      p5.fill(getColourForPenNum(i)); 
+      p5.stroke(strokeColour);
+     
+      p5.rect(x+w/2, ypos, r, r); 
+     
     }
     p5.popStyle();
   }

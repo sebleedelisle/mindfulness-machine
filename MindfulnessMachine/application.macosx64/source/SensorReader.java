@@ -12,6 +12,8 @@ public class SensorReader {
   String lastReceived = ""; 
   PApplet p5; 
   int lastReceivedTime = 0; 
+  int serialReconnectTries = 0; 
+
 
   boolean dirty = false; 
 
@@ -34,7 +36,7 @@ public class SensorReader {
     b = 0; 
     temperature = new DataPoint("temperature", 10, 30); 
     lux = new DataPoint("brightness", 0, 3000); 
-    colourTemperature = new DataPoint("colour temperature", 0, 15000); 
+    colourTemperature = new DataPoint("colour temp", 0, 15000); 
     temperature.smooth = 0.1f; 
     lux.smooth = 0.1f; 
     colourTemperature.smooth = 0.1f; 
@@ -50,17 +52,17 @@ public class SensorReader {
     connectToSerial();
   }
   public float drawData(float x, float y, float w, float barheight, float vspacing) {
-    
+
 
     temperature.drawHorizontal(p5, x, y, w, barheight); 
-    
+
     y+=barheight+vspacing; 
-    
+
     lux.drawHorizontal(p5, x, y, w, barheight);
     y+=barheight+vspacing; 
     colourTemperature.drawHorizontal(p5, x, y, w, barheight);
-       
-    return y+barheight; 
+
+    return y+barheight;
   }
   public void update(float happiness, float stimulation) { 
 
@@ -121,17 +123,21 @@ public class SensorReader {
     }
     // this code resets the Arduino Leonardo - hacky though!   
     if (!serialReset) { 
-      p5.println("Resetting to Serial - "+portName);
+      p5.println("Resetting  Serial - "+portName);
       try { 
         sensorSerialPort = new Serial(p5, portName, 1200);
         sensorSerialPort.stop();
         sensorSerialPort.dispose(); 
         serialReset = true;
-        retrySerialTime = p5.millis()+10000;
+        //retrySerialTime = p5.millis()+10000;
+        serialReconnectTries++;
+        retrySerialTime+= p5.constrain(p5.pow(2, serialReconnectTries), 5000, 300000);
       } 
       catch(RuntimeException e) { 
-        p5.println(p5.millis(), e); 
-        retrySerialTime = p5.millis()+5000;
+        int nextTime = (int)p5.constrain(p5.pow(2, serialReconnectTries)*1000, 5000, 300000); 
+        p5.println(e, "trying again in ", nextTime); 
+        serialReconnectTries++;
+        retrySerialTime+= nextTime;
       }
     } else { 
       //p5.delay(5000);
@@ -140,10 +146,13 @@ public class SensorReader {
       try { 
         sensorSerialPort = new Serial(p5, portName, 9600);
         connected = true;
+        serialReconnectTries = 0;
       } 
       catch (RuntimeException e) { 
-        p5.println(p5.millis(), e); 
-        retrySerialTime = p5.millis()+5000; 
+        int nextTime = (int)p5.constrain(p5.pow(2, serialReconnectTries)*1000, 5000, 300000); 
+        p5.println(e, "trying again in ", nextTime); 
+        serialReconnectTries++;
+        retrySerialTime+= nextTime; 
         serialReset = false;
       }
     }
