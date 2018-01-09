@@ -20,6 +20,10 @@ final int STATE_DRAWING = 7;
 final int numTypes = 4; 
 
 boolean TEST_MODE = true;  
+
+boolean SAVE_TIMELAPSE_PREVIEW = true; 
+int timelapseFrame = 0; 
+int timeLapseSkip = 1; 
 //boolean paused = false; 
 
 int state = STATE_CAMERA_SETUP; 
@@ -59,8 +63,10 @@ CommandRendererData greenDataRenderer;
 
 void setup() { 
 
-  //fullScreen(); 
-  size(1920, 1080); 
+  fullScreen(); 
+  //size(1920, 1080); 
+  //pixelDensity(2);
+ 
   noSmooth();
   plotterGuide = loadImage("images/PlotterGuide.png");
   loadState(); 
@@ -74,18 +80,14 @@ void setup() {
 
   moodManager = new MoodManager(this); 
   plotter = new Plotter(this, width, height); 
-  if (TEST_MODE) {
+  if (TEST_MODE) {   
     plotter.dry = true; 
     //moodManager.timeSpeed = 1000;
   }
+  if(SAVE_TIMELAPSE_PREVIEW) plotter.previewWidth = 2800;
   plotter.addVelocityCommand(1); 
 
-
-
   colourChooser = new ColourChooser(this); 
-
-
-
 
   for (int i = 0; i<8; i++) { 
     plotter.setPenThicknessMM(i, 0.8);
@@ -140,7 +142,9 @@ void saveState() {
   saveStrings("data/IssueNum.txt", data);
 }
 void draw() { 
-
+ 
+  scale(0.8,0.8);
+  
   moodManager.update();
   currentDateString = moodManager.getCurrentDateString();
   plotter.update();
@@ -303,6 +307,15 @@ void draw() {
         finishedDrawing = true;
       }
     }  
+    
+    if(SAVE_TIMELAPSE_PREVIEW) { 
+      if(frameCount%timeLapseSkip==0) { 
+        String filename = nf(drawingNumber,3)+"-"+nf(timelapseFrame)+".jpg"; 
+        plotter.previewImage.g.get().save("timelapse/"+filename); 
+        timelapseFrame++; 
+      }  
+    }
+    
     // note no break... 
   case STATE_PRE_DRAWING : 
     background(0); 
@@ -310,7 +323,7 @@ void draw() {
 
 
     if (state == STATE_PRE_DRAWING) {
-      if (millis()-lastStateChangeTime > 5000/moodManager.timeSpeed) { 
+      if (millis()-lastStateChangeTime > 5000/moodManager.timeSpeed) {  
         changeState(STATE_DRAWING);
       } else { 
         // println("HELLO"); 
@@ -333,7 +346,7 @@ void draw() {
       text("CHANGE PAPER AND PRESS SPACE TO CONTINUE", width*0.75, (height/2)+150);
       renderProgressBottomLeft();
     } else { 
-      renderProgressBottom();
+      renderProgressBottomLeft();
     }
 
 
@@ -376,44 +389,6 @@ void draw() {
   //fill(255); 
   //textSize(14);
   //text(getShapesRemaining(), 10, 100);
-}
-
-void renderProgressBottom() {  
-  renderProgressBottomLeft(); 
-
-  ////previewPos;
-
-  //pushMatrix(); 
-  //translate(16, 400); 
-  ////scale(0.6, 0.6); 
-
-  //float imageheight = 680; 
-
-
-  ////plotter.renderProgress();
-  //CommandRenderer cr = plotter.progressImage; 
-  //PVector penPos = cr.penPos; 
-
-  //float top = previewPos.y; 
-  //float bottom = previewPos.y+imageheight; 
-  //if(penPos.y<top) previewPos.y = cr.penPos.y; 
-  //else if(penPos.y>bottom) previewPos.y = cr.penPos.y-imageheight; 
-
-
-  ////translate(0,-previewPos.y); 
-
-  //PGraphics g = cr.g; 
-
-  //cr.endDrawing();
-  //  //scale(0.5,0.5); 
-  //image(g, 0, 0);
-  //stroke(255,0,0); 
-  //noFill(); 
-  //rectMode(CORNER);
-  //rect(0,previewPos.y, 1920,imageheight);
-
-
-  //popMatrix();
 }
 
 void renderProgressBottomLeft() {  
@@ -573,10 +548,18 @@ void keyPressed() {
       drawingNumber++;
       changePens();
     }
+    if(SAVE_TIMELAPSE_PREVIEW) { 
+      timeLapseSkip ++; 
+      
+    }
   } else if (keyCode == DOWN) {
     if (state == STATE_WAIT_PENS) {
       drawingNumber--;
       changePens();
+    }
+    if(SAVE_TIMELAPSE_PREVIEW) { 
+      if(timeLapseSkip>1) timeLapseSkip --; 
+      
     }
   } else if (key=='N') {
     if (state == STATE_PEN_TEST) {

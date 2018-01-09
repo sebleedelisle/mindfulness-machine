@@ -10,10 +10,11 @@ Slider seedSlider, typeSlider;
 
 void initGui() { 
 
+  int xpos = 1200; 
   cp5 = new ControlP5(this);  
   // label, min, max, value, x, y, w,h
   seedSlider = cp5.addSlider("s_seed")
-    .setPosition(1600, 50)
+    .setPosition(xpos, 50)
     .setSize(250, 20)
     .setRange(0, 100)
     .setNumberOfTickMarks(101) 
@@ -22,7 +23,7 @@ void initGui() {
     .setValue(14);
 
   typeSlider = cp5.addSlider("s_type")
-    .setPosition(1600, 80)
+    .setPosition(xpos, 80)
     .setSize(250, 20)
     .setRange(0, 4)
     .setNumberOfTickMarks(5) 
@@ -30,7 +31,7 @@ void initGui() {
     .setValue(1);
 
   cp5.addSlider("s_happy")
-    .setPosition(1600, 110)
+    .setPosition(xpos, 110)
     .setSize(250, 20)
     .setRange(0, 1)
     .setNumberOfTickMarks(101) 
@@ -38,7 +39,7 @@ void initGui() {
     .setValue(0.5);
     
   cp5.addSlider("s_stim")
-    .setPosition(1600, 140)
+    .setPosition(xpos, 140)
     .setSize(250, 20)
     .setRange(0, 1)
     .setNumberOfTickMarks(101) 

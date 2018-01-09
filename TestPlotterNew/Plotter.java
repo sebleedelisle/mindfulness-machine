@@ -9,7 +9,7 @@ import processing.serial.*;
 
 
 
-public class Plotter { 
+public class Plotter extends Thread { 
 
   final char escapeChar = (char)27;
   final char termChar = (char)'\r';
@@ -26,12 +26,12 @@ public class Plotter {
   ArrayList<Command> commandsProcessed; 
 
   PApplet p5; 
-  Serial serial;
+  volatile Serial serial;
 
   boolean debug; // outputs serial data to console
 
   boolean dry = false; // doesn't send drawing commands to the plotter
-  
+
   String plotterID; 
 
   int plotWidth, plotHeight;
@@ -44,7 +44,7 @@ public class Plotter {
 
   CommandRenderer previewImage; 
   CommandRenderer progressImage; 
-  
+
   int previewWidth = 940; 
 
   PenManager penManager;  
@@ -67,7 +67,7 @@ public class Plotter {
   int printingStartedTime; 
   int commandsSentSincePrintingStarted; 
 
-  ArrayList<String> requestsSent; 
+  //ArrayList<String> requestsSent; 
   String receivedString = "" ; 
   String receivedBuffer = ""; 
 
@@ -79,25 +79,22 @@ public class Plotter {
 
   public Plotter(PApplet processing, int screenwidth, int screenheight) { 
 
-
-    
     //serial = null;
     p5 = processing;
-    debug = false;
+    debug = true;
 
-    requestsSent = new ArrayList<String>(); 
+    //requestsSent = new ArrayList<String>(); 
 
     printing = false;  // if true, we're sending commands to the plotter
-    waiting = false; 
+   // waiting = false; 
     initialised = false;  // true once we're sure we have a handshake with the plotter
-
 
     lastPlotPosition = new PVector(0, 0); // used to store where the plotter is so we can measure how far it's drawn
     currentPen = 0;
     isPenDown = false; 
     commands = new ArrayList<Command>();
     commandsProcessed = new ArrayList<Command>();
-    commandsPerSecond = 100;//20; 
+    commandsPerSecond = 20; 
     commandsSentSincePrintingStarted = 0; 
 
     this.screenWidth = screenwidth; 
@@ -108,19 +105,45 @@ public class Plotter {
     plotHeight = 11040; 
     plotterUnitsPerMM = 40; 
 
+
     penManager = new PenManager(p5);
     updatePlotterScale();
+
+    start();
   }
 
+  public void start()
+  {
+    super.start();
+  }
+
+  public void run()
+  {
+
+    while (true) { 
+
+      if (serial==null) continue; 
+
+      if ( !initialised) {
+        getInitDataFromPlotter(); 
+        initialised = true;
+      } else {  
+        while (serial.available()>0) {
+        } // end serial read loop
+      }
+      p5.delay(1);
+      super.yield();
+    } // end thread loop
+  }
 
   public boolean update() {
-    while(commandsProcessed.size()>10) 
-      commandsProcessed.remove(0); 
-      
+
+    commandsProcessed.clear(); 
     // if ((!initialised)&&(!dry)) return false; 
     if (!initialised) return false; 
 
     if (p5.frameCount%60==0) penManager.saveStatus(); 
+
     if (commands.size()==0) {
       if (!finished) {  
         finished = true;
@@ -132,13 +155,8 @@ public class Plotter {
     // if we haven't heard back from the plotter for a while, give it a nudge
     if ((waiting) && (p5.millis()-lastRequestSent>10000)) { 
       p5.println("resetting plotter", p5.millis(), lastRequestSent); 
-      for(int i =0; i<commandsProcessed.size(); i++) { 
-        Command c= commandsProcessed.get(i);
-        p5.println(c.c, c.p1, c.p2, c.p3); 
-        
-      }
-      requestsSent.clear(); 
-      read("OA");
+
+      //read("OA");
     }
 
     if ((printing) && (commands.size()>0) && (!waiting)) { 
@@ -157,178 +175,13 @@ public class Plotter {
     }
   }
 
-  void getInitDataFromPlotter() { 
-    // reset plotter and empty buffer
-    send(escapeChar+".K");
-    plotterID = read( "OI"); 
-    //p5.println("Plotter ID       : ", plotterID); 
-
-    // The command OH returns the "hard clip limits", in other words the output area in 
-    // plotter units. Assumes top left of 0,0 which is probably bad
-    // TODO - don't assume top left of 0,0 :) 
-    String r = read("OH");
-    //String[] tokens = r.split(",");
-    //plotWidth = Integer.parseInt(tokens[2]); 
-    //plotHeight = Integer.parseInt(tokens[3]); 
-
-
-
-    // The OF commmand returns the plotter units per mm in both the x and y axis
-    // This assumes that they are the same, which is probably an OK assumption. 
-    r = read("OF"); 
-    //tokens = r.split(",");
-    //plotterUnitsPerMM = Integer.parseInt(tokens[0]); 
-
-
-
-    // OO command returns "options" I think just to show whether the plotter can change pens 
-    // and do arcs and circles. 
-    //p5.println("Plotter opts     : "+request(true, "OO"));
-
-    // OS command returns plotter status as an integer representing several binary flags
-    // The important one is :
-    // Bit 5 (32) : error flag - use command OE to find out what the error is
-    // p5.println("Plotter status   : "+stringIntToBinaryString(read( "OS")));
-
-    // OE command returns error status with binary flags with bits (note 4, 7, 8 unused): 
-    // 0 : no bits set, so no error
-    // 1 : unrecognisable command
-    // 2 : Wrong number of params
-    // 3 : Unusable parameter
-    // 5 : Unusable character set designated
-    // 6 : Coordinate overflow
-    //p5.println("Plotter error    : "+stringIntToBinaryString(read( "OE")));
-
-    // OW will return window width and height, should be same as OF, except I think it can be changed
-    //p5.println("Plotter window   : "+read( "OW"));
-
-    // ESC.B will return the available buffer. Might be useful
-    //p5.println("Buffer remaining : "+read( escapeChar+".B"));
-    // ESC.O returns the plotter status :
-    // 0 buffer is not empty
-    // 8 buffer is empty
-    // 16 buffer is not empty and plotter is paused (pause button pressed)
-    // 24 Buffer is empty and plotter is paused
-    //p5.println("Plotter status   : "+read( escapeChar+".O"));
-  }
-  public boolean serialEvent(Serial port) { 
-    //Serial port = serial; 
-    if (port!=serial) return false; 
-
-    while (port.available()>0) {
-
-      int inByte = port.read();
-      //p5.println((char)inByte+ " : " + inByte);
-      //if ((inByte!=0)&&(inByte!=(int)('\r'))) {
-
-      if (inByte == 13) { 
-        receivedString = receivedBuffer; 
-        receivedBuffer = "";
-
-        if (requestsSent.size()>0) { 
-          p5.println(requestsSent.get(0)+ " : "+ receivedString);    
-
-          String request = requestsSent.get(0); 
-          if (request.indexOf("OA")==0) { 
-            waiting = false;
-            startPrinting();
-          } else if (request.indexOf("OI")==0) {
-            plotterID = receivedString;
-          } else if (request.indexOf("OH")==0) { 
-            String[] tokens = receivedString.split(",");
-            plotWidth = Integer.parseInt(tokens[2]); 
-            plotHeight = Integer.parseInt(tokens[3]);
-          } else if (request.indexOf("OF")==0) { 
-
-            String[] tokens = receivedString.split(",");
-
-            // TODO - update pen thicknesses based on this new value! 
-            plotterUnitsPerMM = Integer.parseInt(tokens[0]);  
-            updatePlotterScale();
-
-            p5.println("Plotter id       : "+plotterID);
-            p5.println("Plotter dpmm     : "+plotterUnitsPerMM);
-            p5.println("Plotter size     : "+plotWidth+" x "+plotHeight);
-            p5.println("Plotter size (mm): "+plotWidth/plotterUnitsPerMM+" x "+plotHeight/plotterUnitsPerMM);
-
-            // set plotter in absolute mode
-            send("PA"); 
-
-            selectPen(0);
-
-            initialised = true;
-          }
-
-          requestsSent.remove(0);
-        } else { 
-          p5.println("received (no requests) : "+ receivedString);
-        }
-      } else { 
-        receivedBuffer = receivedBuffer + (char)inByte;
-      }
-      //}
-      return true;
-    }
-    return false;
-  }
-
   public void startPrinting() { 
     printing = true; 
 
     printingStartedTime = p5.millis(); 
     commandsSentSincePrintingStarted = 0;
-
-
     //p5.println("startPrinting", finished);
   }
-
-  public void renderPreview() { 
-    previewImage.render();
-  }
-  public void renderProgress() { 
-    progressImage.render();
-  }
-
-  public void setPenColour(int index, int c) { 
-    penManager.setColour(index, c);
-  }
-
-  public int getPenColour(int index) { 
-    return penManager.getColour(index);
-  }
-
-  public void setPenThicknessMM(int index, float t) { 
-    penManager.setThickness(index, t*plotterUnitsPerMM);
-  }
-  public void setPenThicknessPixels(int index, float t) { 
-    penManager.setThickness(index, t*scalePixelsToPlotter);
-  }
-
-  public float getPenThicknessMM(int index) { 
-    return penManager.getThickness(index)/plotterUnitsPerMM;
-  }
-  public float getPenThicknessPixels(int index) { 
-    return penManager.getThickness(index)/scalePixelsToPlotter;
-  }
-
-  public void resetPen(int index) { 
-    penManager.resetPen(index);
-  }  
-
-  public float getPenDistance(int index) { 
-    return penManager.getDistance(index);
-  }
-
-  void plotLine(float x1, float y1, float x2, float y2) { 
-    plotLine(new PVector(x1, y1), new PVector(x2, y2));
-  }
-
-  void plotLine(PVector p1, PVector p2) { 
-
-    moveTo(p1); 
-    lineTo(p2);
-  }
-
 
 
   void moveTo(float x, float y) { 
@@ -349,12 +202,7 @@ public class Plotter {
 
   void lineTo(PVector p) { 
     p = screenToPlotter(p);
-
-    //if (currentPosition.dist(p)>accuracy) { 
     addCommand(COMMAND_LINETO, p.x, p.y);
-    //  currentPosition.set(p);
-    //  previewDirty = true;
-    //}
   }
 
   void plotDot(float x, float y) { 
@@ -366,9 +214,21 @@ public class Plotter {
     //previewDirty = true;
   }
 
+  void plotLine(float x1, float y1, float x2, float y2) { 
+    plotLine(new PVector(x1, y1), new PVector(x2, y2));
+  }
+
+  void plotLine(PVector p1, PVector p2) { 
+
+    moveTo(p1); 
+    lineTo(p2);
+  }
+
+
+
   void addCommand(int type, float p1, float p2) { 
     //p5.println("add command float ", type, p1, p2); 
-    addCommand(type, (int)p1, new int[]{(int)p2});
+    addCommand(type, (int)p1, (int)p2);
   }
 
   void addCommand(int type, int p1, int ... arguments) { 
@@ -426,7 +286,6 @@ public class Plotter {
       commands.remove(0); 
 
       commandsProcessed.add(c); 
-      
 
       progressImage.renderCommand(c); 
 
@@ -435,7 +294,7 @@ public class Plotter {
 
           waiting = true;
           //waitStartTime = p5.millis(); 
-          read("OA");
+          request("OA");
         }
       } else if (c.c == COMMAND_LINETO) { 
         plotLineTo(c.p1, c.p2);
@@ -455,7 +314,8 @@ public class Plotter {
         penUp();
         float circleres = p5.constrain(2*p5.asin((float)30/(2*c.p3)), 0.1f, 30); // automatically calculate the resolution of the circle dependent on size
         String cmd = "PU"+c.p1+","+c.p2+";CI"+c.p3+","+p5.round(circleres)+";";
-        rawCommand(cmd, false); 
+        //rawCommand(cmd, false);  // needs to be added to command list 
+
         isPenDown = true; 
         penUp();
       }
@@ -473,11 +333,6 @@ public class Plotter {
     }
   }
 
-  public void clear() { 
-    commands.clear();
-    previewImage.clear(); 
-    progressImage.clear();
-  }
 
 
   // FUNCTIONS THAT ACTUALLY DO THE DRAWING
@@ -526,7 +381,177 @@ public class Plotter {
   }
 
 
-  /// CONVERSION FUNCTIONS  
+  /** 
+   * Sends a raw command to the plotter
+   @param command the command to send to the plotter
+   @param should we wait for a response from the plotter after sending
+   */
+
+  public String rawCommand(String command, boolean wait) {
+
+    if (debug)
+      PApplet.println("raw command: " + command);
+
+    // if (!this.dry)
+    this.serial.write(command);
+
+    String result = "";
+
+    if (wait) {
+
+      if (debug)
+        p5.println("waiting for reply");
+
+      if (wait) {
+
+        if (debug)
+          PApplet.println("waiting for reply");
+        int receiveByte = 0; 
+        while (receiveByte != 13) {
+
+          // TODO ADD TIMEOUT
+          if (serial.available()>0) { 
+            receiveByte = this.serial.read(); 
+
+            if ((receiveByte!=13)&&(receiveByte!=-1)) {
+              result = result + (char)receiveByte;
+              //p5.println((char)receiveByte);
+            }
+          } else { 
+            p5.delay(1);
+            super.yield();
+          }
+        }
+      }
+      if (debug)
+        p5.println(result); 
+      lastRequestSent = p5.millis(); 
+
+      //result = result.replace(Character.toString(termChar), "");
+    }
+
+    return result;
+  }
+
+
+  private String request(String command, Object ... arguments) {
+    return request(true, command, arguments);
+  }
+
+  private String request(boolean wait, String command, Object ... arguments) {
+
+    String output = new String(command);
+
+    boolean needComma = false;
+
+    for (Object arg : arguments) {
+      if (needComma)
+        output = output+",";
+
+      output = output + arg.toString();
+      needComma = true;
+    }
+    output = output + ";";
+
+    String result = rawCommand(output, wait);
+
+    if (debug)
+      p5.println("request: " + output);
+    if (debug)
+      p5.println("result: "+ result);
+
+    return result;
+  }
+
+  //  public String read(String command) {
+  //    return request(true, command);
+  //  }
+
+  public void send(String command, Object... arguments) {
+    if (debug)
+      PApplet.println("send: "+command);
+    request(false, command, arguments);
+  }
+
+  public void close() { 
+    if (serial==null) return; 
+    //send(escapeChar+".K");
+    send(escapeChar+".K");
+    p5.delay(1000);
+    serial.clear();
+    serial.stop();
+  }
+
+
+
+
+  void getInitDataFromPlotter() { 
+    // reset plotter and empty buffer
+    send(escapeChar+".K");
+    plotterID = request( "OI"); 
+    p5.println("Plotter ID       : ", plotterID); 
+
+    // The command OH returns the "hard clip limits", in other words the output area in 
+    // plotter units. Assumes top left of 0,0 which is probably bad
+    // TODO - don't assume top left of 0,0 :) 
+    String r = request("OH");
+    String[] tokens = r.split(",");
+    plotWidth = Integer.parseInt(tokens[2]); 
+    plotHeight = Integer.parseInt(tokens[3]); 
+
+
+
+    // The OF commmand returns the plotter units per mm in both the x and y axis
+    // This assumes that they are the same, which is probably an OK assumption. 
+    r = request("OF"); 
+    tokens = r.split(",");
+    plotterUnitsPerMM = Integer.parseInt(tokens[0]); 
+
+    updatePlotterScale();
+
+    // OO command returns "options" I think just to show whether the plotter can change pens 
+    // and do arcs and circles. 
+    //p5.println("Plotter opts     : "+request(true, "OO"));
+
+    // OS command returns plotter status as an integer representing several binary flags
+    // The important one is :
+    // Bit 5 (32) : error flag - use command OE to find out what the error is
+    // p5.println("Plotter status   : "+stringIntToBinaryString(read( "OS")));
+
+    // OE command returns error status with binary flags with bits (note 4, 7, 8 unused): 
+    // 0 : no bits set, so no error
+    // 1 : unrecognisable command
+    // 2 : Wrong number of params
+    // 3 : Unusable parameter
+    // 5 : Unusable character set designated
+    // 6 : Coordinate overflow
+    //p5.println("Plotter error    : "+stringIntToBinaryString(read( "OE")));
+
+    // OW will return window width and height, should be same as OF, except I think it can be changed
+    //p5.println("Plotter window   : "+read( "OW"));
+
+    // ESC.B will return the available buffer. Might be useful
+    //p5.println("Buffer remaining : "+read( escapeChar+".B"));
+    // ESC.O returns the plotter status :
+    // 0 buffer is not empty
+    // 8 buffer is empty
+    // 16 buffer is not empty and plotter is paused (pause button pressed)
+    // 24 Buffer is empty and plotter is paused
+    //p5.println("Plotter status   : "+read( escapeChar+".O"));
+
+    p5.println("Plotter id       : "+plotterID);
+    p5.println("Plotter dpmm     : "+plotterUnitsPerMM);
+    p5.println("Plotter size     : "+plotWidth+" x "+plotHeight);
+    p5.println("Plotter size (mm): "+plotWidth/plotterUnitsPerMM+" x "+plotHeight/plotterUnitsPerMM);
+
+    // set plotter in absolute mode
+    send("PA"); 
+
+    selectPen(0);
+  }
+
+
+  //----------------------------- CONVERSION FUNCTIONS -------------------------------------
 
 
   void updatePlotterScale() { 
@@ -579,7 +604,7 @@ public class Plotter {
 
 
 
-  //// SERIAL FUNCTIONS... 
+  //-------------------------------- SERIAL FUNCTIONS... 
 
   public boolean connectToSerial(String portname) { 
     String[] interfaces = Serial.list(); 
@@ -597,11 +622,14 @@ public class Plotter {
 
       p5.println("connecting to " + interfaces[serialNumber]); 
       serial = new Serial(p5, interfaces[serialNumber]);
-      p5.println("getting init data"); 
 
-      getInitDataFromPlotter(); 
+      // thread should kick in at this point
 
-      selectPen(0);
+      //p5.println("getting init data"); 
+
+      //getInitDataFromPlotter(); 
+
+      //selectPen(0);
 
       return true;
     } else { 
@@ -609,80 +637,55 @@ public class Plotter {
     }
   }
 
+  public void clear() { 
+    commands.clear();
+    previewImage.clear(); 
+    progressImage.clear();
+  }
 
   String stringIntToBinaryString(String intString) { 
     return Integer.toBinaryString(Integer.parseInt(intString));
   }
 
-  /** 
-   * Sends a raw command to the plotter
-   @param command the command to send to the plotter
-   @param should we wait for a response from the plotter after sending
-   */
 
-  public String rawCommand(String command, boolean wait) {
+  //-------------------------- RENDERING ---------------------------------
+  public void renderPreview() { 
+    previewImage.render();
+  }
+  public void renderProgress() { 
+    progressImage.render();
+  }
+  //-------------------------- PEN MANAGER ------------------------------
 
-    if (debug)
-      PApplet.println("raw command: " + command);
 
-    // if (!this.dry)
-    this.serial.write(command);
 
-    String result = "";
-
-    if (wait) {
-
-      if (debug)
-        p5.println("waiting for reply");
-
-      result = ""; 
-      requestsSent.add(command); 
-      lastRequestSent = p5.millis(); 
-
-      //result = result.replace(Character.toString(termChar), "");
-    }
-
-    return result;
+  public void setPenColour(int index, int c) { 
+    penManager.setColour(index, c);
   }
 
-  private String request(boolean wait, String command, Object ... arguments) {
-
-    String output = new String(command);
-
-    boolean needComma = false;
-
-    for (Object arg : arguments) {
-      if (needComma)
-        output = output+",";
-
-      output = output + arg.toString();
-      needComma = true;
-    }
-    output = output + ";";
-
-    String result = rawCommand(output, wait);
-
-    if (debug)
-      p5.println("request: " + output);
-    if (debug)
-      p5.println("result: "+ result);
-
-    return result;
+  public int getPenColour(int index) { 
+    return penManager.getColour(index);
   }
 
-  public String read(String command) {
-    return request(true, command);
+  public void setPenThicknessMM(int index, float t) { 
+    penManager.setThickness(index, t*plotterUnitsPerMM);
+  }
+  public void setPenThicknessPixels(int index, float t) { 
+    penManager.setThickness(index, t*scalePixelsToPlotter);
   }
 
-  public void send(String command, Object... arguments) {
-    if (debug)
-      PApplet.println("send: "+command);
-    request(false, command, arguments);
+  public float getPenThicknessMM(int index) { 
+    return penManager.getThickness(index)/plotterUnitsPerMM;
+  }
+  public float getPenThicknessPixels(int index) { 
+    return penManager.getThickness(index)/scalePixelsToPlotter;
   }
 
-  public void close() { 
-    //send(escapeChar+".K");
-    send(escapeChar+".K");
-    p5.delay(1000);
+  public void resetPen(int index) { 
+    penManager.resetPen(index);
+  }  
+
+  public float getPenDistance(int index) { 
+    return penManager.getDistance(index);
   }
 }

@@ -123,7 +123,7 @@ public class SensorReader {
     }
     // this code resets the Arduino Leonardo - hacky though!   
     if (!serialReset) { 
-      p5.println("Resetting  Serial - "+portName);
+      p5.println("Resetting Sensor Serial - "+portName);
       try { 
         sensorSerialPort = new Serial(p5, portName, 1200);
         sensorSerialPort.stop();
@@ -142,7 +142,7 @@ public class SensorReader {
     } else { 
       //p5.delay(5000);
       lastReceivedTime = p5.millis(); 
-      p5.println("Connecting to Serial - "+portName);
+      p5.println("Connecting to Sensor Serial - "+portName);
       try { 
         sensorSerialPort = new Serial(p5, portName, 9600);
         connected = true;

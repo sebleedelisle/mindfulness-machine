@@ -31,7 +31,7 @@ int drawingNumber;
 
 void setup() { 
 
-  size(1920, 1080, JAVA2D);
+  size(1620, 1080, P2D);
   noSmooth();
   plotter = new Plotter(this, width, height); 
   plotter.connectToSerial("usbserial"); 
