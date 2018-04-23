@@ -55,12 +55,10 @@
     </dict>
 
     <key>LSUIPresentationMode</key>
-    <integer>4</integer>
+    <integer>0</integer>
 
     <key>JVMOptions</key>
     <array>
-      <string>-Xms64m</string>
-      <string>-Xmx1024m</string>
       <string>-Djna.nosys=true</string>
 
       <string>-Xdock:icon=$APP_ROOT/Contents/Resources/sketch.icns</string>

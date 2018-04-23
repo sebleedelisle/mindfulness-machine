@@ -38,7 +38,7 @@ void plotFrameAndName(float w, float h, float stim, float happy) {
   float textScale = 1.7; 
   float spacing = 8; 
 
-  String textLabel = "MINDFULNESS MACHINE "+currentDateString+" STIMULATION:"+round(stim*100)+"% HAPPINESS:"+round(happy*100)+"% MOOD:"+moodManager.getMoodDescription(happy, stim)+" #"+drawingNumber+" SEB.LY";
+  String textLabel = "MINDFULNESS MACHINE "+currentDateString+" STIMULATION:"+round(stim*100)+"% HAPPINESS:"+round(happy*100)+"% MOOD:"+moodManager.getMoodDescription(happy, stim)+" #"+(drawingNumber+1000)+" SEB.LY";
   float textWidth = 6.5*textScale * (textLabel.length()) ;
 
   plotter.addVelocityCommand(1); 

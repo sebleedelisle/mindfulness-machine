@@ -19,7 +19,12 @@ final int STATE_DRAWING = 7;
 
 final int numTypes = 4; 
 
-boolean TEST_MODE = true;  
+boolean TEST_MODE = false;  
+boolean PLOTTER_ONLY = false; 
+
+boolean SAVE_TIMELAPSE_PREVIEW = false; 
+int timelapseFrame = 0; 
+int timeLapseSkip = 1; 
 //boolean paused = false; 
 
 int state = STATE_CAMERA_SETUP; 
@@ -32,9 +37,7 @@ List<ShapeData> shapes;
 
 PImage plotterGuide; 
 
-float xzoom = 0;
-float yzoom =0;
-float zoom =1; 
+long lastMouseMove = 0; 
 int shapenum = 0; 
 int currentColourShape = 0; 
 int drawingNumber; // for keeping track of the number for prints
@@ -61,6 +64,9 @@ void setup() {
 
   //fullScreen(); 
   size(1920, 1080); 
+  //pixelDensity(2);
+  frameRate(30);
+ 
   noSmooth();
   plotterGuide = loadImage("images/PlotterGuide.png");
   loadState(); 
@@ -68,32 +74,27 @@ void setup() {
   bodyFont = loadFont("fonts/BitstreamVeraSansMono-Bold-16.vlw");
   titleFont = loadFont("fonts/AvenirNextCondensed-DemiBoldItalic-32.vlw");
   logoFont = loadFont("fonts/AvenirNextCondensed-DemiBoldItalic-48.vlw");
-  
+
 
   setConsoleFont();
 
   moodManager = new MoodManager(this); 
+  
   plotter = new Plotter(this, width, height); 
-  if (TEST_MODE) {
+  if (TEST_MODE) {   
     plotter.dry = true; 
     //moodManager.timeSpeed = 1000;
   }
+  if(SAVE_TIMELAPSE_PREVIEW) plotter.previewWidth = 2800;
   plotter.addVelocityCommand(1); 
 
-
-
   colourChooser = new ColourChooser(this); 
-
-
-
 
   for (int i = 0; i<8; i++) { 
     plotter.setPenThicknessMM(i, 0.8);
   }
 
   plotter.connectToSerial("usbserial");
-  
-  
 }
 
 
@@ -142,12 +143,27 @@ void saveState() {
   saveStrings("data/IssueNum.txt", data);
 }
 void draw() { 
-
-  moodManager.update();
-  currentDateString = moodManager.getCurrentDateString();
-  plotter.update();
+ 
+  //scale(0.8,0.8);
+  if(millis() - lastMouseMove < 10000) { 
+    cursor(); 
+  } else {
+    noCursor(); 
+  }
   
-  if((greenDataRenderer==null) && (plotter.initialised)) { 
+  if(!PLOTTER_ONLY) moodManager.update();
+  
+  currentDateString = moodManager.getCurrentDateString();
+  
+   if (greenDataRenderer!=null) { 
+    synchronized(plotter) { 
+      greenDataRenderer.renderCommands(plotter.commandsProcessed); 
+    }
+   }
+  
+  plotter.update();
+
+  if ((greenDataRenderer==null) && (plotter.initialised)) { 
     greenDataRenderer = new CommandRendererData(this, plotter.penManager, plotter.plotWidth, plotter.plotHeight, plotter.scalePixelsToPlotter);
   }
 
@@ -230,7 +246,7 @@ void draw() {
     textAlign(CENTER, TOP); 
     setTitleFont(); 
 
-    if (!plotter.finished || plotter.waiting) { 
+    if (!plotter.finished) { 
       text("TESTING PEN CHANGE SYSTEM, PLEASE WAIT", width/2, 300);
     } else {
       text("PEN CHANGE TEST FINISHED", width/2, 300);
@@ -305,6 +321,15 @@ void draw() {
         finishedDrawing = true;
       }
     }  
+    
+    if(SAVE_TIMELAPSE_PREVIEW) { 
+      if(frameCount%timeLapseSkip==0) { 
+        String filename = nf(drawingNumber,3)+"-"+nf(timelapseFrame)+".jpg"; 
+        plotter.previewImage.g.get().save("timelapse/"+filename); 
+        timelapseFrame++; 
+      }  
+    }
+    
     // note no break... 
   case STATE_PRE_DRAWING : 
     background(0); 
@@ -312,7 +337,7 @@ void draw() {
 
 
     if (state == STATE_PRE_DRAWING) {
-      if (millis()-lastStateChangeTime > 5000/moodManager.timeSpeed) { 
+      if (millis()-lastStateChangeTime > 5000/moodManager.timeSpeed) {  
         changeState(STATE_DRAWING);
       } else { 
         // println("HELLO"); 
@@ -335,25 +360,25 @@ void draw() {
       text("CHANGE PAPER AND PRESS SPACE TO CONTINUE", width*0.75, (height/2)+150);
       renderProgressBottomLeft();
     } else { 
-      renderProgressBottom();
+      renderProgressBottomLeft();
     }
 
 
 
 
     renderTopSectionData(); 
-    
-    if(greenDataRenderer!=null) { 
-      greenDataRenderer.renderCommands(plotter.commandsProcessed); 
+
+    if (greenDataRenderer!=null) { 
+  
       pushMatrix(); 
       pushStyle(); 
-      translate(940,420); 
+      translate(940, 420); 
       greenDataRenderer.render(); 
       popStyle();
-      popMatrix(); 
+      popMatrix();
     }
-    
-    
+
+
 
     break;
   }
@@ -380,55 +405,17 @@ void draw() {
   //text(getShapesRemaining(), 10, 100);
 }
 
-void renderProgressBottom() {  
-  renderProgressBottomLeft(); 
-
-  ////previewPos;
-
-  //pushMatrix(); 
-  //translate(16, 400); 
-  ////scale(0.6, 0.6); 
-
-  //float imageheight = 680; 
-
-
-  ////plotter.renderProgress();
-  //CommandRenderer cr = plotter.progressImage; 
-  //PVector penPos = cr.penPos; 
-
-  //float top = previewPos.y; 
-  //float bottom = previewPos.y+imageheight; 
-  //if(penPos.y<top) previewPos.y = cr.penPos.y; 
-  //else if(penPos.y>bottom) previewPos.y = cr.penPos.y-imageheight; 
-
-
-  ////translate(0,-previewPos.y); 
-
-  //PGraphics g = cr.g; 
-
-  //cr.endDrawing();
-  //  //scale(0.5,0.5); 
-  //image(g, 0, 0);
-  //stroke(255,0,0); 
-  //noFill(); 
-  //rectMode(CORNER);
-  //rect(0,previewPos.y, 1920,imageheight);
-
-
-  //popMatrix();
-}
-
 void renderProgressBottomLeft() {  
   pushMatrix(); 
   translate(0, 416); 
   //scale(0.6, 0.6); 
 
   plotter.renderProgress();
-  if(!plotter.initialised) { 
-    textAlign(LEFT,TOP);
+  if (!plotter.initialised) { 
+    textAlign(LEFT, TOP);
     setConsoleFont(); 
     fill(0); 
-    text("PLOTTER NOT INITIALISED", 10,10);
+    text("PLOTTER NOT INITIALISED", 10, 10);
   }
   popMatrix();
 }
@@ -441,12 +428,12 @@ void renderTopSectionData() {
   //translate(0,0); 
   setConsoleFont(); 
   moodManager.draw(consoleFont, bodyFont);
-  
+
   setConsoleFont(); 
   textAlign(CENTER, TOP); 
-  fill(0,255,255);
-  text("PEN DISTANCE\nTRAVELLED", 1810,30); 
-  renderPenUsage(1760,70);
+  fill(0, 255, 255);
+  text("PEN DISTANCE\nTRAVELLED", 1810, 30); 
+  renderPenUsage(1760, 70);
   popMatrix();
 }
 
@@ -456,12 +443,12 @@ void renderPenUsage(float xpos, float ypos) {
   translate(xpos, ypos);
   textAlign(LEFT, CENTER); 
   setConsoleFont();
-  fill(0,255,255);
+  fill(0, 255, 255);
   float w = 30, h = 300; 
-  colourChooser.renderPensSquare(0, 0,w, h, color(0,128,128));
+  colourChooser.renderPensSquare(0, 0, w, h, color(0, 128, 128));
   float spacing = w; 
-  if((h/8)>spacing) spacing = h/8; 
-  
+  if ((h/8)>spacing) spacing = h/8; 
+
   for (int i = 0; i<8; i++) { 
     float y = map(i, 7, 0, w/2, h-(w/2)); 
     text(nfc(round(plotter.getPenDistance(i)))+"mm", w+6, y);
@@ -547,8 +534,8 @@ void keyPressed() {
   if (key == ' ') {
     nextState();
   } else if (key == 'D') {
-    printArray(plotter.requestsSent); 
-    println("plotter.waiting", plotter.waiting);
+  //  printArray(plotter.requestsSent); 
+  //  println("plotter.waiting", plotter.waiting);
   } else if (key == 'P') {
     if (state==STATE_DRAWING) { 
       // paused = !paused;
@@ -562,9 +549,9 @@ void keyPressed() {
     moodManager.skipTimeHours(4);
   } else if (key == 'T') {
     moodManager.timeSpeed*=2; 
-    if(moodManager.timeSpeed>100000) {
-      
-      moodManager.resetTimeSpeed(); 
+    if (moodManager.timeSpeed>100000) {
+
+      moodManager.resetTimeSpeed();
     }
   } else if (key == '=') {
   } else if (key =='W') {
@@ -575,10 +562,18 @@ void keyPressed() {
       drawingNumber++;
       changePens();
     }
+    if(SAVE_TIMELAPSE_PREVIEW) { 
+      timeLapseSkip ++; 
+      
+    }
   } else if (keyCode == DOWN) {
     if (state == STATE_WAIT_PENS) {
       drawingNumber--;
       changePens();
+    }
+    if(SAVE_TIMELAPSE_PREVIEW) { 
+      if(timeLapseSkip>1) timeLapseSkip --; 
+      
     }
   } else if (key=='N') {
     if (state == STATE_PEN_TEST) {
@@ -587,6 +582,10 @@ void keyPressed() {
   } else if (key=='S') {
     if (state == STATE_WAIT_PENS) {
       changeState(STATE_DRAWING);
+    }
+  } else if (key=='F') {
+    if (state != STATE_DRAWING) {
+      plotFrame();
     }
   }
 }
@@ -622,7 +621,7 @@ boolean changeState(int newstate) {
   if (state == STATE_DRAWING) {
     startDrawing();
   } else if (state == STATE_PRE_DRAWING) {
-    if(greenDataRenderer!=null) greenDataRenderer.clear();
+    if (greenDataRenderer!=null) greenDataRenderer.clear();
     plotter.clear();
   } else if (state == STATE_WAIT_PENS) { 
     changePens();
@@ -693,7 +692,7 @@ void startDrawing() {
 
 
   for (ShapeData s : shapes) {
-    outlineContour(s.getShape(), 7); 
+    outlineContour(s.getShape(), 7);
   }
 
 
@@ -707,15 +706,29 @@ void startDrawing() {
 }
 
 void plotFrame() {
+  println("plotFrame()");
+  float w = ((float)height*plotter.aspectRatio);
+  float h = height;
+  RoundRectangle2D r = new RoundRectangle2D.Float(0, 0, w-0.5, h, 10, 10); 
+  frame = new Area(r); 
+  plotter.addVelocityCommand(10); 
+  outlineContour(frame, 7);
+  plotter.startPrinting();
 }
 
+
+
 void mousePressed() { 
-  zoom = 3-zoom;
+  //zoom = 3-zoom;
+}
+
+void mouseMoved() { 
+  lastMouseMove = millis();
 }
 
 void serialEvent(Serial port) {
   moodManager.sensorReader.serialEvent(port);
-  plotter.serialEvent(port);
+//  plotter.serialEvent(port);
 }
 
 //void appendLog(JSONObject json) {

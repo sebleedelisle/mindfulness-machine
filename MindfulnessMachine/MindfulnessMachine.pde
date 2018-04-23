@@ -19,9 +19,10 @@ final int STATE_DRAWING = 7;
 
 final int numTypes = 4; 
 
-boolean TEST_MODE = true;  
+boolean TEST_MODE = false;  
+boolean PLOTTER_ONLY = false; 
 
-boolean SAVE_TIMELAPSE_PREVIEW = true; 
+boolean SAVE_TIMELAPSE_PREVIEW = false; 
 int timelapseFrame = 0; 
 int timeLapseSkip = 1; 
 //boolean paused = false; 
@@ -36,9 +37,7 @@ List<ShapeData> shapes;
 
 PImage plotterGuide; 
 
-float xzoom = 0;
-float yzoom =0;
-float zoom =1; 
+long lastMouseMove = 0; 
 int shapenum = 0; 
 int currentColourShape = 0; 
 int drawingNumber; // for keeping track of the number for prints
@@ -63,9 +62,10 @@ CommandRendererData greenDataRenderer;
 
 void setup() { 
 
-  fullScreen(); 
-  //size(1920, 1080); 
+  //fullScreen(); 
+  size(1920, 1080); 
   //pixelDensity(2);
+  frameRate(30);
  
   noSmooth();
   plotterGuide = loadImage("images/PlotterGuide.png");
@@ -79,6 +79,7 @@ void setup() {
   setConsoleFont();
 
   moodManager = new MoodManager(this); 
+  
   plotter = new Plotter(this, width, height); 
   if (TEST_MODE) {   
     plotter.dry = true; 
@@ -143,10 +144,23 @@ void saveState() {
 }
 void draw() { 
  
-  scale(0.8,0.8);
+  //scale(0.8,0.8);
+  if(millis() - lastMouseMove < 10000) { 
+    cursor(); 
+  } else {
+    noCursor(); 
+  }
   
-  moodManager.update();
+  if(!PLOTTER_ONLY) moodManager.update();
+  
   currentDateString = moodManager.getCurrentDateString();
+  
+   if (greenDataRenderer!=null) { 
+    synchronized(plotter) { 
+      greenDataRenderer.renderCommands(plotter.commandsProcessed); 
+    }
+   }
+  
   plotter.update();
 
   if ((greenDataRenderer==null) && (plotter.initialised)) { 
@@ -232,7 +246,7 @@ void draw() {
     textAlign(CENTER, TOP); 
     setTitleFont(); 
 
-    if (!plotter.finished || plotter.waiting) { 
+    if (!plotter.finished) { 
       text("TESTING PEN CHANGE SYSTEM, PLEASE WAIT", width/2, 300);
     } else {
       text("PEN CHANGE TEST FINISHED", width/2, 300);
@@ -355,7 +369,7 @@ void draw() {
     renderTopSectionData(); 
 
     if (greenDataRenderer!=null) { 
-      greenDataRenderer.renderCommands(plotter.commandsProcessed); 
+  
       pushMatrix(); 
       pushStyle(); 
       translate(940, 420); 
@@ -520,8 +534,8 @@ void keyPressed() {
   if (key == ' ') {
     nextState();
   } else if (key == 'D') {
-    printArray(plotter.requestsSent); 
-    println("plotter.waiting", plotter.waiting);
+  //  printArray(plotter.requestsSent); 
+  //  println("plotter.waiting", plotter.waiting);
   } else if (key == 'P') {
     if (state==STATE_DRAWING) { 
       // paused = !paused;
@@ -705,12 +719,16 @@ void plotFrame() {
 
 
 void mousePressed() { 
-  zoom = 3-zoom;
+  //zoom = 3-zoom;
+}
+
+void mouseMoved() { 
+  lastMouseMove = millis();
 }
 
 void serialEvent(Serial port) {
   moodManager.sensorReader.serialEvent(port);
-  plotter.serialEvent(port);
+//  plotter.serialEvent(port);
 }
 
 //void appendLog(JSONObject json) {

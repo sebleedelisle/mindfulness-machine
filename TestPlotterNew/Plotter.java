@@ -128,8 +128,22 @@ public class Plotter extends Thread {
         getInitDataFromPlotter(); 
         initialised = true;
       } else {  
-        while (serial.available()>0) {
-        } // end serial read loop
+        
+        if(commands.size()==0) { 
+          finished = true;  
+        } else { 
+          finished = false;
+        }
+         
+        if((printing) && (!finished)) {
+          int buffer; 
+          buffer = Integer.parseInt(request(escapeChar+".B"));
+          if(buffer>800) processCommand(1); 
+        }
+          
+        
+        //while (serial.available()>0) {
+        //} // end serial read loop
       }
       p5.delay(1);
       super.yield();
@@ -137,42 +151,42 @@ public class Plotter extends Thread {
   }
 
   public boolean update() {
+      return true; 
+//    commandsProcessed.clear(); 
+//    // if ((!initialised)&&(!dry)) return false; 
+//    if (!initialised) return false; 
 
-    commandsProcessed.clear(); 
-    // if ((!initialised)&&(!dry)) return false; 
-    if (!initialised) return false; 
+//    if (p5.frameCount%60==0) penManager.saveStatus(); 
 
-    if (p5.frameCount%60==0) penManager.saveStatus(); 
+//    if (commands.size()==0) {
+//      if (!finished) {  
+//        finished = true;
+//      }
+//    } else { 
+//      finished = false;
+//    }
 
-    if (commands.size()==0) {
-      if (!finished) {  
-        finished = true;
-      }
-    } else { 
-      finished = false;
-    }
+//    // if we haven't heard back from the plotter for a while, give it a nudge
+//    if ((waiting) && (p5.millis()-lastRequestSent>10000)) { 
+//      p5.println("resetting plotter", p5.millis(), lastRequestSent); 
 
-    // if we haven't heard back from the plotter for a while, give it a nudge
-    if ((waiting) && (p5.millis()-lastRequestSent>10000)) { 
-      p5.println("resetting plotter", p5.millis(), lastRequestSent); 
+//      //read("OA");
+//    }
 
-      //read("OA");
-    }
+//    if ((printing) && (commands.size()>0) && (!waiting)) { 
 
-    if ((printing) && (commands.size()>0) && (!waiting)) { 
+//      float totalPrintTime = (float) (p5.millis()-printingStartedTime)/1000f; 
 
-      float totalPrintTime = (float) (p5.millis()-printingStartedTime)/1000f; 
+//      float commandrate = commandsPerSecond; 
+//      if (dry) commandrate = 10000;//10000; 
+//      while ((commands.size()>0) &&(float)commandsSentSincePrintingStarted/(float)totalPrintTime<commandrate) {
+//        processCommand(1);
+//      }
 
-      float commandrate = commandsPerSecond; 
-      if (dry) commandrate = 10000;//10000; 
-      while ((commands.size()>0) &&(float)commandsSentSincePrintingStarted/(float)totalPrintTime<commandrate) {
-        processCommand(1);
-      }
-
-      return true;
-    } else { 
-      return false ;
-    }
+//      return true;
+//    } else { 
+//      return false ;
+//    }
   }
 
   public void startPrinting() { 
@@ -228,7 +242,7 @@ public class Plotter extends Thread {
 
   void addCommand(int type, float p1, float p2) { 
     //p5.println("add command float ", type, p1, p2); 
-    addCommand(type, (int)p1, (int)p2);
+    addCommand(type, (int)p1, new int[]{(int)p2});
   }
 
   void addCommand(int type, int p1, int ... arguments) { 
@@ -286,6 +300,7 @@ public class Plotter extends Thread {
       commands.remove(0); 
 
       commandsProcessed.add(c); 
+      while(commandsProcessed.size()>100) commandsProcessed.remove(0);
 
       progressImage.renderCommand(c); 
 

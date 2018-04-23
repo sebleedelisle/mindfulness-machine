@@ -22,7 +22,7 @@ String cameraName = "Camera";//"FaceTime HD Camera (Built-in)";// ******* CHANGE
   PApplet p5; 
   int motionLevel; 
   Rectangle[] faces;
-  float camMotionScale, camFacesScale; 
+  float camMotionScale, camFacesScale, camVerticalPortion; 
   int camWidth, camHeight; 
 
   DataPoint motion; // amount of motion detected 0->1
@@ -44,12 +44,13 @@ String cameraName = "Camera";//"FaceTime HD Camera (Built-in)";// ******* CHANGE
     //String[] cameras = Capture.list();
     //p5.printArray(cameras);
 
-    camMotionScale = 0.125f; 
-    camFacesScale = 0.3f; 
+    camMotionScale = 0.25f; 
+    camFacesScale = 0.5f; 
+    camVerticalPortion = 0.6f; 
     camWidth = 1024; 
     camHeight = 768; 
-    openCVMotion = new OpenCV(p5, p5.round(camWidth*camMotionScale), p5.round(camHeight*camMotionScale));
-    openCVFaces = new OpenCV(p5, p5.round(camWidth*camFacesScale), p5.round(camHeight*camFacesScale));
+    openCVMotion = new OpenCV(p5, p5.round(camWidth*camMotionScale), p5.round(camHeight*camMotionScale*camVerticalPortion));
+    openCVFaces = new OpenCV(p5, p5.round(camWidth*camFacesScale), p5.round(camHeight*camFacesScale*camVerticalPortion));
     openCVFaces.loadCascade(OpenCV.CASCADE_FRONTALFACE); 
 
     startBackgroundSubtraction(100, 5, 0.1);
@@ -146,7 +147,7 @@ String cameraName = "Camera";//"FaceTime HD Camera (Built-in)";// ******* CHANGE
     }
 
     crowd.setValue(getCrowding((faces==null)?0:faces.length));//-crowd)*0.01; 
-    motion.setValue(p5.min(motionPixelCount, 1000));
+    motion.setValue(p5.min(motionPixelCount/2, 1000));
   }
 
   public float drawData(float x, float y, float w, float barheight, float vspacing) {
@@ -182,7 +183,7 @@ String cameraName = "Camera";//"FaceTime HD Camera (Built-in)";// ******* CHANGE
         p5.tint(100, 0, 0);
         p5.blendMode(p5.ADD);
 
-        p5.image(motionImage, 0, 0, camWidth, camHeight);
+        p5.image(motionImage, 0, 0, camWidth, camHeight*camVerticalPortion);
       }
       if (faces!=null) { 
         p5.pushMatrix(); 

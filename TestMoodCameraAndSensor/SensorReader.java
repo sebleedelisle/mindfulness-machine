@@ -4,7 +4,7 @@ import processing.core.*;
 public class SensorReader { 
   Serial sensorSerialPort;      // The serial port
 
-  String[] portNames = {"/dev/tty.usbmodem1411", "/dev/tty.usbmodem1421", "/dev/tty.usbmodem1431", "/dev/tty.usbmodem1441"};
+  String[] portNames = {"/dev/tty.usbmodem1411", "/dev/tty.usbmodem1421", "/dev/tty.usbmodem1431", "/dev/tty.usbmodem1441", "/dev/tty.usbmodem1451"};
   String portName = ""; 
 
   int inByte = -1;    // Incoming serial data
@@ -184,7 +184,7 @@ public class SensorReader {
     return true;
   }
   public boolean parseData(String data) { 
-    p5.println(data);
+    //p5.println(data);
     String[] items = p5.split(data, ','); 
 
     if (items.length!=4) return false; // bad data

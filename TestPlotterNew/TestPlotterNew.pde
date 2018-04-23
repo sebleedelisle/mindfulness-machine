@@ -41,12 +41,16 @@ void setup() {
   for (int i = 0; i<8; i++) { 
     plotter.setPenThicknessMM(i, 0.8);
   }
+  
+  plotter.selectPen(floor(random(8)));
+  
   for (float x = 0; x<1000; x+=20) { 
-    plotter.selectPen(floor(random(8)));
-    plotter.moveTo(x, 0); 
-    plotter.lineTo(x, 800); 
+    
+    float y = random(790); 
+    plotter.moveTo(x, y); 
+    plotter.lineTo(x, y+10); 
 
-    plotter.plotCircle(random(width), random(height), random(10, 40));
+    //plotter.plotCircle(random(width), random(height), random(10, 40));
   }
   
   plotter.debug = true;

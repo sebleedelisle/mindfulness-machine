@@ -1,630 +1,368 @@
 [
   {
+    "drawingNumber": 0,
+    "usedPens": [
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0
+    ],
+    "happiness": 5,
+    "startTime": "16.01.2018 21:26:04",
+    "type": 0,
+    "stimulation": 13
+  },
+  {
+    "drawingNumber": 0,
+    "usedPens": [
+      0,
+      1,
+      7,
+      0,
+      1,
+      7,
+      0,
+      1
+    ],
+    "happiness": 6,
+    "startTime": "16.01.2018 21:38:39",
+    "type": 0,
+    "stimulation": 22
+  },
+  {
     "drawingNumber": 1,
+    "usedPens": [
+      0,
+      1,
+      7,
+      0,
+      1
+    ],
+    "happiness": 6,
+    "startTime": "16.01.2018 21:39:40",
+    "type": 1,
+    "stimulation": 19
+  },
+  {
+    "drawingNumber": 2,
+    "usedPens": [
+      0,
+      1,
+      7,
+      0,
+      1
+    ],
+    "happiness": 6,
+    "startTime": "16.01.2018 21:40:40",
+    "type": 2,
+    "stimulation": 21
+  },
+  {
+    "drawingNumber": 3,
+    "usedPens": [
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0
+    ],
+    "happiness": 5,
+    "startTime": "16.01.2018 21:41:09",
+    "type": 3,
+    "stimulation": 15
+  },
+  {
+    "drawingNumber": 4,
+    "usedPens": [
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0
+    ],
+    "happiness": 6,
+    "startTime": "16.01.2018 21:42:16",
+    "type": 0,
+    "stimulation": 17
+  },
+  {
+    "drawingNumber": 5,
+    "usedPens": [
+      0,
+      7,
+      0,
+      7,
+      0,
+      7,
+      0
+    ],
+    "happiness": 4,
+    "startTime": "16.01.2018 21:57:50",
+    "type": 1,
+    "stimulation": 10
+  },
+  {
+    "drawingNumber": 6,
+    "usedPens": [
+      0,
+      7,
+      0
+    ],
+    "happiness": 0,
+    "startTime": "14.02.2018 08:36:20",
+    "type": 2,
+    "stimulation": 2
+  },
+  {
+    "drawingNumber": 7,
+    "usedPens": [
+      1,
+      2,
+      0
+    ],
+    "happiness": 32,
+    "startTime": "15.03.2018 21:49:22",
+    "type": 3,
+    "stimulation": 42
+  },
+  {
+    "drawingNumber": 8,
     "usedPens": [
       1,
       0,
       1
     ],
-    "happiness": 21,
-    "startTime": "16.05.2017 13:19:28",
-    "type": 1,
-    "stimulation": 3
-  },
-  {
-    "drawingNumber": 2,
-    "usedPens": [
-      6,
-      5
-    ],
-    "happiness": 96,
-    "startTime": "20.05.2017 10:42:55",
-    "type": 2,
-    "stimulation": 3
-  },
-  {
-    "drawingNumber": 3,
-    "usedPens": [
-      6,
-      5
-    ],
-    "happiness": 98,
-    "startTime": "20.05.2017 10:43:36",
-    "type": 3,
+    "happiness": 32,
+    "startTime": "15.03.2018 22:38:27",
+    "type": 0,
     "stimulation": 1
-  },
-  {
-    "drawingNumber": 4,
-    "usedPens": [
-      6,
-      5,
-      4,
-      3
-    ],
-    "happiness": 98,
-    "startTime": "20.05.2017 10:49:18",
-    "type": 0,
-    "stimulation": 43
-  },
-  {
-    "drawingNumber": 5,
-    "usedPens": [
-      6,
-      5
-    ],
-    "happiness": 99,
-    "startTime": "20.05.2017 10:50:34",
-    "type": 1,
-    "stimulation": 4
-  },
-  {
-    "drawingNumber": 6,
-    "usedPens": [
-      6,
-      5,
-      4,
-      3
-    ],
-    "happiness": 99,
-    "startTime": "20.05.2017 10:51:28",
-    "type": 2,
-    "stimulation": 49
-  },
-  {
-    "drawingNumber": 7,
-    "usedPens": [
-      6,
-      5
-    ],
-    "happiness": 98,
-    "startTime": "20.05.2017 10:52:26",
-    "type": 3,
-    "stimulation": 0
-  },
-  {
-    "drawingNumber": 8,
-    "usedPens": [
-      6,
-      5
-    ],
-    "happiness": 99,
-    "startTime": "20.05.2017 10:55:35",
-    "type": 0,
-    "stimulation": 2
   },
   {
     "drawingNumber": 9,
     "usedPens": [
-      6,
-      5
+      1,
+      0,
+      1
     ],
-    "happiness": 99,
-    "startTime": "20.05.2017 10:56:49",
+    "happiness": 33,
+    "startTime": "15.03.2018 22:53:36",
     "type": 1,
     "stimulation": 1
   },
   {
     "drawingNumber": 10,
     "usedPens": [
-      6,
-      5
+      1,
+      0,
+      1
     ],
-    "happiness": 97,
-    "startTime": "20.05.2017 10:57:57",
+    "happiness": 33,
+    "startTime": "15.03.2018 22:57:27",
     "type": 2,
-    "stimulation": 3
+    "stimulation": 2
   },
   {
     "drawingNumber": 11,
     "usedPens": [
       3,
-      4
+      4,
+      2
     ],
-    "happiness": 57,
-    "startTime": "22.05.2017 16:42:09",
+    "happiness": 55,
+    "startTime": "16.03.2018 09:01:51",
     "type": 3,
-    "stimulation": 2
+    "stimulation": 18
   },
   {
     "drawingNumber": 12,
     "usedPens": [
-      3,
-      4
+      4,
+      5
     ],
-    "happiness": 57,
-    "startTime": "22.05.2017 16:50:23",
+    "happiness": 66,
+    "startTime": "16.03.2018 11:36:09",
     "type": 0,
-    "stimulation": 3
+    "stimulation": 1
   },
   {
     "drawingNumber": 13,
     "usedPens": [
-      3,
-      4
+      5,
+      6
     ],
-    "happiness": 57,
-    "startTime": "22.05.2017 17:08:45",
+    "happiness": 77,
+    "startTime": "16.03.2018 18:09:06",
     "type": 1,
     "stimulation": 1
   },
   {
     "drawingNumber": 14,
     "usedPens": [
-      3,
-      4
+      5,
+      6
     ],
-    "happiness": 56,
-    "startTime": "22.05.2017 17:09:35",
+    "happiness": 78,
+    "startTime": "16.03.2018 18:20:57",
     "type": 2,
     "stimulation": 0
   },
   {
     "drawingNumber": 15,
     "usedPens": [
-      3,
-      4
+      5,
+      6
     ],
-    "happiness": 56,
-    "startTime": "22.05.2017 17:10:39",
+    "happiness": 79,
+    "startTime": "16.03.2018 19:29:17",
     "type": 3,
-    "stimulation": 3
+    "stimulation": 4
   },
   {
     "drawingNumber": 16,
     "usedPens": [
-      3,
-      4
+      5,
+      6,
+      4,
+      3
     ],
-    "happiness": 56,
-    "startTime": "22.05.2017 17:17:18",
+    "happiness": 78,
+    "startTime": "16.03.2018 19:49:07",
     "type": 0,
-    "stimulation": 4
+    "stimulation": 46
   },
   {
     "drawingNumber": 17,
     "usedPens": [
+      5,
+      6,
+      4,
       3,
-      4
+      2
     ],
-    "happiness": 56,
-    "startTime": "22.05.2017 17:38:24",
+    "happiness": 78,
+    "startTime": "16.03.2018 19:49:22",
     "type": 1,
-    "stimulation": 2
+    "stimulation": 57
   },
   {
     "drawingNumber": 18,
     "usedPens": [
-      3,
-      4
+      5,
+      6
     ],
-    "happiness": 56,
-    "startTime": "22.05.2017 17:39:46",
+    "happiness": 78,
+    "startTime": "16.03.2018 19:52:09",
     "type": 2,
-    "stimulation": 2
+    "stimulation": 9
   },
   {
     "drawingNumber": 19,
     "usedPens": [
-      3,
-      4
+      5,
+      6
     ],
-    "happiness": 55,
-    "startTime": "22.05.2017 17:45:10",
+    "happiness": 77,
+    "startTime": "16.03.2018 19:54:41",
     "type": 3,
-    "stimulation": 2
+    "stimulation": 15
   },
   {
     "drawingNumber": 20,
     "usedPens": [
-      2,
-      1,
-      2
+      5,
+      6
     ],
-    "happiness": 47,
-    "startTime": "22.05.2017 20:21:08",
+    "happiness": 77,
+    "startTime": "16.03.2018 20:19:19",
     "type": 0,
-    "stimulation": 3
+    "stimulation": 2
   },
   {
     "drawingNumber": 21,
     "usedPens": [
-      2,
-      1,
-      2
+      5,
+      6
     ],
-    "happiness": 46,
-    "startTime": "22.05.2017 20:23:24",
+    "happiness": 77,
+    "startTime": "16.03.2018 20:21:59",
     "type": 1,
-    "stimulation": 4
+    "stimulation": 0
   },
   {
     "drawingNumber": 22,
     "usedPens": [
-      2,
-      1,
-      2
+      4,
+      5
     ],
-    "happiness": 47,
-    "startTime": "22.05.2017 20:24:00",
+    "happiness": 75,
+    "startTime": "16.03.2018 20:57:00",
     "type": 2,
-    "stimulation": 1
+    "stimulation": 3
   },
   {
     "drawingNumber": 23,
     "usedPens": [
-      2,
-      1,
-      2
+      5,
+      6
     ],
-    "happiness": 48,
-    "startTime": "22.05.2017 20:26:05",
+    "happiness": 76,
+    "startTime": "16.03.2018 21:32:23",
     "type": 3,
-    "stimulation": 3
+    "stimulation": 1
   },
   {
     "drawingNumber": 24,
     "usedPens": [
-      2,
-      1,
-      2
+      5,
+      6
     ],
-    "happiness": 45,
-    "startTime": "22.05.2017 20:51:38",
+    "happiness": 76,
+    "startTime": "16.03.2018 21:34:01",
     "type": 0,
-    "stimulation": 2
+    "stimulation": 3
   },
   {
     "drawingNumber": 25,
     "usedPens": [
-      2,
-      1,
-      2
+      5,
+      6
     ],
-    "happiness": 45,
-    "startTime": "22.05.2017 20:52:54",
+    "happiness": 76,
+    "startTime": "16.03.2018 22:08:59",
     "type": 1,
-    "stimulation": 4
+    "stimulation": 1
   },
   {
     "drawingNumber": 26,
     "usedPens": [
-      2,
-      1,
-      2
+      5,
+      6
     ],
-    "happiness": 45,
-    "startTime": "22.05.2017 20:53:42",
+    "happiness": 76,
+    "startTime": "17.03.2018 24:31:35",
     "type": 2,
-    "stimulation": 1
+    "stimulation": 0
   },
   {
     "drawingNumber": 27,
     "usedPens": [
-      0,
-      7,
-      0
-    ],
-    "happiness": 5,
-    "startTime": "24.05.2017 20:58:03",
-    "type": 3,
-    "stimulation": 4
-  },
-  {
-    "drawingNumber": 28,
-    "usedPens": [
-      1,
-      0,
-      1
-    ],
-    "happiness": 34,
-    "startTime": "25.05.2017 21:04:23",
-    "type": 0,
-    "stimulation": 3
-  },
-  {
-    "drawingNumber": 29,
-    "usedPens": [
-      4,
-      5
-    ],
-    "happiness": 75,
-    "startTime": "26.05.2017 21:07:20",
-    "type": 1,
-    "stimulation": 4
-  },
-  {
-    "drawingNumber": 30,
-    "usedPens": [
-      5,
-      6,
-      4,
-      3,
-      2
-    ],
-    "happiness": 77,
-    "startTime": "26.05.2017 21:11:23",
-    "type": 2,
-    "stimulation": 52
-  },
-  {
-    "drawingNumber": 31,
-    "usedPens": [
-      5,
-      6,
-      4,
-      3
-    ],
-    "happiness": 76,
-    "startTime": "26.05.2017 21:13:32",
-    "type": 3,
-    "stimulation": 38
-  },
-  {
-    "drawingNumber": 32,
-    "usedPens": [
-      4,
-      5,
-      3,
-      6
-    ],
-    "happiness": 75,
-    "startTime": "26.05.2017 21:27:28",
-    "type": 0,
-    "stimulation": 39
-  },
-  {
-    "drawingNumber": 33,
-    "usedPens": [
-      6,
-      5,
-      4,
-      3
-    ],
-    "happiness": 98,
-    "startTime": "27.05.2017 21:34:38",
-    "type": 1,
-    "stimulation": 38
-  },
-  {
-    "drawingNumber": 34,
-    "usedPens": [
       6,
       5
     ],
-    "happiness": 95,
-    "startTime": "27.05.2017 22:48:19",
-    "type": 2,
-    "stimulation": 15
-  },
-  {
-    "drawingNumber": 35,
-    "usedPens": [
-      6,
-      5,
-      4,
-      3
-    ],
-    "happiness": 98,
-    "startTime": "28.05.2017 09:42:19",
-    "type": 3,
-    "stimulation": 49
-  },
-  {
-    "drawingNumber": 36,
-    "usedPens": [
-      6,
-      5,
-      4,
-      3,
-      2
-    ],
-    "happiness": 98,
-    "startTime": "28.05.2017 09:50:30",
-    "type": 0,
-    "stimulation": 59
-  },
-  {
-    "drawingNumber": 37,
-    "usedPens": [
-      6,
-      5
-    ],
-    "happiness": 99,
-    "startTime": "28.05.2017 09:52:11",
-    "type": 1,
-    "stimulation": 0
-  },
-  {
-    "drawingNumber": 38,
-    "usedPens": [
-      6,
-      5,
-      4
-    ],
-    "happiness": 99,
-    "startTime": "28.05.2017 09:53:45",
-    "type": 2,
-    "stimulation": 29
-  },
-  {
-    "drawingNumber": 39,
-    "usedPens": [
-      6,
-      5
-    ],
-    "happiness": 99,
-    "startTime": "28.05.2017 09:54:40",
+    "happiness": 101,
+    "startTime": "17.03.2018 12:15:32",
     "type": 3,
     "stimulation": 2
-  },
-  {
-    "drawingNumber": 40,
-    "usedPens": [
-      6,
-      5
-    ],
-    "happiness": 99,
-    "startTime": "28.05.2017 09:54:49",
-    "type": 0,
-    "stimulation": 4
-  },
-  {
-    "drawingNumber": 41,
-    "usedPens": [
-      4,
-      5
-    ],
-    "happiness": 67,
-    "startTime": "29.05.2017 10:04:55",
-    "type": 1,
-    "stimulation": 9
-  },
-  {
-    "drawingNumber": 42,
-    "usedPens": [
-      4,
-      5
-    ],
-    "happiness": 67,
-    "startTime": "29.05.2017 10:02:37",
-    "type": 2,
-    "stimulation": 12
-  },
-  {
-    "drawingNumber": 43,
-    "usedPens": [
-      1,
-      2,
-      0
-    ],
-    "happiness": 25,
-    "startTime": "30.05.2017 10:04:06",
-    "type": 3,
-    "stimulation": 42
-  },
-  {
-    "drawingNumber": 44,
-    "usedPens": [
-      1,
-      0,
-      1,
-      0,
-      1,
-      0,
-      1
-    ],
-    "happiness": 25,
-    "startTime": "30.05.2017 10:12:24",
-    "type": 0,
-    "stimulation": 11
-  },
-  {
-    "drawingNumber": 45,
-    "usedPens": [
-      0,
-      7,
-      0
-    ],
-    "happiness": 17,
-    "startTime": "02.01.2018 16:14:01",
-    "type": 1,
-    "stimulation": 1
-  },
-  {
-    "drawingNumber": 46,
-    "usedPens": [
-      1,
-      0,
-      1
-    ],
-    "happiness": 18,
-    "startTime": "02.01.2018 16:16:49",
-    "type": 2,
-    "stimulation": 0
-  },
-  {
-    "drawingNumber": 47,
-    "usedPens": [
-      0,
-      7,
-      0
-    ],
-    "happiness": 5,
-    "startTime": "03.01.2018 13:51:51",
-    "type": 3,
-    "stimulation": 1
-  },
-  {
-    "drawingNumber": 48,
-    "usedPens": [
-      0,
-      7,
-      0
-    ],
-    "happiness": 4,
-    "startTime": "03.01.2018 13:57:25",
-    "type": 0,
-    "stimulation": 1
-  },
-  {
-    "drawingNumber": 49,
-    "usedPens": [
-      0,
-      7,
-      0
-    ],
-    "happiness": 5,
-    "startTime": "03.01.2018 16:19:01",
-    "type": 1,
-    "stimulation": 1
-  },
-  {
-    "drawingNumber": 50,
-    "usedPens": [
-      0,
-      7,
-      0,
-      7,
-      0
-    ],
-    "happiness": 6,
-    "startTime": "03.01.2018 16:31:46",
-    "type": 2,
-    "stimulation": 8
-  },
-  {
-    "drawingNumber": 51,
-    "usedPens": [
-      0,
-      1,
-      7,
-      0,
-      1,
-      7,
-      0,
-      1,
-      7,
-      0,
-      1,
-      7,
-      0,
-      1
-    ],
-    "happiness": 6,
-    "startTime": "03.01.2018 16:37:22",
-    "type": 3,
-    "stimulation": 31
-  },
-  {
-    "drawingNumber": 52,
-    "usedPens": [
-      0,
-      7,
-      0
-    ],
-    "happiness": 6,
-    "startTime": "03.01.2018 16:47:11",
-    "type": 0,
-    "stimulation": 3
   }
 ]
